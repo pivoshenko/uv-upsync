@@ -1,0 +1,110 @@
+[project]
+name = "uv-plugin-up"
+version = "1.0.0"
+description = "uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["click>=8.1.8", "httpx>=0.28.1", "tomlkit>=0.13.3"]
+
+[project.scripts]
+uv-plugin-up = "uv_plugin_up.__main__:main"
+
+[dependency-groups]
+ci = ["python-semantic-release~=10.4.1"]
+dev = ["poethepoet>=0.37.0"]
+formatters = ["pyupgrade>=3.21.0", "ruff>=0.14.0"]
+linters = ["commitizen>=4.9.1", "mypy>=1.18.2", "ruff>=0.14.0"]
+tests = [
+  "coverage[toml]>=7.10.7",
+  "pytest==7.4.4",
+  "pytest-cov>=7.0.0",
+  "pytest-lazy-fixture>=0.6.3",
+  "pytest-mock>=3.15.1",
+  "pytest-sugar>=1.1.1",
+  "sh>=2.2.2",
+  "xdoctest>=1.3.0"
+]
+
+[tool.commitizen]
+allowed_prefixes = ["0", "1", "Initial", "Merge"]
+
+[tool.coverage.run]
+omit = ["*/__init__.py"]
+
+[tool.mypy]
+namespace_packages = true
+python_version = "3.13"
+show_error_codes = true
+strict = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+addopts = ["--basetemp=tests/fixtures", "--color=yes", "--cov=src", "--cov-report=xml", "--cov-report=html", "--xdoc"]
+testpaths = ["tests"]
+
+[tool.ruff]
+fix = true
+line-length = 100
+target-version = "py313"
+unsafe-fixes = true
+
+[tool.ruff.lint]
+ignore = ["D101", "D107", "D102", "D103", "D203", "D213", "COM812", "G004", "TRY003", "TRY401"]
+select = ["ALL"]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+from-first = false
+length-sort-straight = true
+lines-after-imports = 2
+lines-between-types = 1
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/uv_plugin_up/__main__.py" = ["EM102"]
+"src/uv_plugin_up/exceptions.py" = ["ANN204"]
+"tests/*.*" = ["INP001", "S101"]
+
+[tool.ruff.format]
+docstring-code-format = true
+quote-style = "double"
+
+[tool.semantic_release]
+changelog_file = "CHANGELOG.md"
+commit_author = "github-actions <github-actions@github.com>"
+exclude_commit_patterns = ["Merge pull request"]
+logging_use_named_masks = true
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/uv_plugin_up/__init__.py:__version__"]
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = ['''Merged? .*''', '''Initial Commit.*''', '''^\d+\.\d+\.\d+''']
+
+[tool.semantic_release.commit_parser_options]
+major_tags = ["feat"]
+minor_tags = ["fix", "perf", "refactor"]
+patch_tags = ["docs", "style"]
+
+[tool.poe.tasks.format]
+help = "Run formatters"
+sequence = [
+  { shell = "find src -type f -name '*.py' | xargs uv run pyupgrade --py313-plus", help = "Run annotations formatter" },
+  { shell = "find tests -type f -name '*.py' | xargs uv run pyupgrade --py313-plus", help = "Run annotations formatter" },
+  { shell = "uv run ruff format .", help = "Run code formatter" }
+]
+
+[tool.poe.tasks.lint]
+help = "Run linters"
+sequence = [
+  { shell = "uv run mypy .", help = "Run types linter" },
+  { shell = "uv run ruff check .", help = "Run code linter" },
+  { shell = "uv run cz check --rev-range .", help = "Run commits linter" }
+]
+
+[tool.poe.tasks.tests]
+help = "Run tests"
+shell = "uv run pytest ."
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
