@@ -29,7 +29,7 @@ tests = [
 allowed_prefixes = ["0", "1", "Initial", "Merge"]
 
 [tool.coverage.run]
-omit = ["*/__init__.py"]
+omit = ["*/__init__.py", "*/__main__.py"]
 
 [tool.mypy]
 exclude = ["tests/"]
