@@ -64,8 +64,66 @@
   </a>
 </p>
 
-- [Overview](#overview)
+- [🪴 Overview](#-overview)
+  - [Features](#features)
+- [🌙 Installation](#-installation)
+- [🧙‍♂️ Usage and Configuration](#️-usage-and-configuration)
+  - [Basic Usage](#basic-usage)
+  - [Command-line Options](#command-line-options)
+    - [Specify a custom pyproject.toml path](#specify-a-custom-pyprojecttoml-path)
+    - [Exclude packages from updates](#exclude-packages-from-updates)
+    - [Preview changes without modifying files](#preview-changes-without-modifying-files)
 
-## Overview
+## 🪴 Overview
 
 `uv-plugin-up` - is a plugin for automated dependency updates and version bumping in `pyproject.toml` files.
+
+### Features
+
+- **Automated dependency updates** - automatically updates dependencies to their latest versions from PyPI
+- **Multiple dependency groups support** - handles `project.dependencies`, `project.optional-dependencies`, and `dependency-groups`
+- **Selective updates** - exclude specific packages from being updated
+- **Dry-run mode** - preview changes without modifying files
+- **Safe updates** - automatically runs `uv lock` after updates and rolls back on failure
+
+## 🌙 Installation
+
+Install using `uv`:
+
+```bash
+uv add --dev uv-plugin-up
+```
+
+## 🧙‍♂️ Usage and Configuration
+
+### Basic Usage
+
+Update all dependencies in your `pyproject.toml`:
+
+```bash
+uv-plugin-up
+```
+
+### Command-line Options
+
+#### Specify a custom pyproject.toml path
+
+```bash
+uv-plugin-up --filepath /path/to/pyproject.toml
+```
+
+#### Exclude packages from updates
+
+You can exclude specific packages from being updated (multiple values allowed):
+
+```bash
+uv-plugin-up --exclude package_01 --exclude package_02
+```
+
+#### Preview changes without modifying files
+
+Use dry-run mode to see what would be updated:
+
+```bash
+uv-plugin-up --dry-run
+```
