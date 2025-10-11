@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.2 (2025-10-11)
+
+### Documentation
+
+- Update notes
+  ([`238ee5c`](https://github.com/pivoshenko/uv-plugin-up/commit/238ee5c765910c4c9dc272bee926420032b94c99))
+
+
 ## v1.1.1 (2025-10-11)
 
 ### Chores

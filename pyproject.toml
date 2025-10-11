@@ -1,6 +1,6 @@
 [project]
 name = "uv-plugin-up"
-version = "1.1.1"
+version = "1.1.2"
 description = "uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."
 license = "MIT"
 authors = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
