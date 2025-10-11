@@ -2,9 +2,56 @@
 name = "uv-plugin-up"
 version = "1.1.0"
 description = "uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."
+license = "MIT"
+authors = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
+maintainers = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
+keywords = [
+  "cross-platform",
+  "dependency",
+  "dependencies",
+  "dependencies-management",
+  "dependencies-update",
+  "dependencies-upgrade",
+  "hacktoberfest",
+  "packaging",
+  "packaging-management",
+  "packaging-update",
+  "packaging-upgrade",
+  "plugin",
+  "plugins",
+  "uv",
+  "uv-plugin",
+  "uv-plugins",
+  "pypi",
+  "python"
+]
 readme = "README.md"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Other Environment",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Scientific/Engineering",
+  "Natural Language :: English"
+]
 requires-python = ">=3.10"
 dependencies = ["click>=8.1.8", "httpx>=0.28.1", "tomlkit>=0.13.3"]
+
+[project.urls]
+Homepage = "https://github.com/pivoshenko/uv-plugin-up"
+Repository = "https://github.com/pivoshenko/uv-plugin-up"
 
 [project.scripts]
 uv-plugin-up = "uv_plugin_up.__main__:main"
