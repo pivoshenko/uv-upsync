@@ -64,31 +64,30 @@
   </a>
 </p>
 
-## 🪴 Overview
+## Overview
 
 `uv-plugin-up` - is a plugin for automated dependency updates and version bumping in `pyproject.toml` files.
 
 ### Features
 
-- **Automated dependency updates** - automatically updates dependencies to their latest versions from PyPI
-- **Multiple dependency groups support** - handles `project.dependencies`, `project.optional-dependencies`, and `dependency-groups`
-- **Selective updates** - exclude specific packages from being updated
-- **Dry-run mode** - preview changes without modifying files
-- **Safe updates** - automatically runs `uv lock` after updates and rolls back on failure
+- Fully type-safe
+- Automatically updates dependencies to their latest versions from PyPI
+- Multiple dependency groups support - handles `project.dependencies`, `project.optional-dependencies`, and `dependency-groups`
+- Selective updates - exclude specific packages from being updated
+- Dry-run mode - preview changes without modifying files
+- Safe updates - automatically runs `uv lock` after updates and rolls back on failure
 
-## 🌙 Installation
-
-Install using `uv`:
+## Installation
 
 ```bash
 uv add --dev uv-plugin-up
+# or
+uv add uv-plugin-up --group dev
 ```
 
-## 🧙‍♂️ Usage and Configuration
+## Usage and Configuration
 
-### Basic Usage
-
-Update all dependencies in your `pyproject.toml`:
+By default, the plugin updates all dependencies in the `pyproject.toml`:
 
 ```bash
 uv-plugin-up
@@ -96,24 +95,58 @@ uv-plugin-up
 
 ### Command-line Options
 
-#### Specify a custom pyproject.toml path
+#### `filepath`
+
+**Type**: `Path`
+
+**Default**: `./pyproject.toml`
+
+**Short flag**: `-f`
+
+Specifies the path to the `pyproject.toml` file. If your project file is located elsewhere or has a different name, you can set this parameter.
+
+#### `exclude`
+
+**Type**: `str`
+
+**Default**: `()`
+
+**Multiple values**: `allowed`
+
+Specifies packages to exclude from updating. You can provide multiple package names to prevent them from being updated.
+
+#### `dry-run`
+
+**Type**: `bool`
+
+**Default**: `false`
+
+Enables preview mode where changes are displayed without modifying the `pyproject.toml` file. This is useful for reviewing what would be updated before applying changes.
+
+## Examples
 
 ```bash
-uv-plugin-up --filepath /path/to/pyproject.toml
-```
+uv-plugin-up --exclude click
 
-#### Exclude packages from updates
-
-You can exclude specific packages from being updated (multiple values allowed):
-
-```bash
-uv-plugin-up --exclude package_01 --exclude package_02
-```
-
-#### Preview changes without modifying files
-
-Use dry-run mode to see what would be updated:
-
-```bash
-uv-plugin-up --dry-run
+# Updating dependencies in 'project' group
+# Skipping 'click>=8.1.8' (excluded)
+# Skipping 'httpx>=0.28.1' (no new version available)
+# Skipping 'tomlkit>=0.13.3' (no new version available)
+# Updating dependencies in 'dependency-groups' group
+# Skipping 'python-semantic-release~=10.4.1' (no new version available)
+# Skipping 'poethepoet>=0.37.0' (no new version available)
+# Skipping 'pyupgrade>=3.21.0' (no new version available)
+# Skipping 'ruff>=0.14.0' (no new version available)
+# Skipping 'commitizen>=4.9.1' (no new version available)
+# Skipping 'mypy>=1.18.2' (no new version available)
+# Skipping 'ruff>=0.14.0' (no new version available)
+# Skipping 'coverage[toml]>=7.10.7' (no new version available)
+# Excluding dependency 'pytest'
+# Skipping 'pytest==7.4.4' (no new version available)
+# Skipping 'pytest-cov>=7.0.0' (no new version available)
+# Skipping 'pytest-lazy-fixture>=0.6.3' (no new version available)
+# Skipping 'pytest-mock>=3.15.1' (no new version available)
+# Skipping 'pytest-sugar>=1.1.1' (no new version available)
+# Skipping 'sh>=2.2.2' (no new version available)
+# Skipping 'xdoctest>=1.3.0' (no new version available)
 ```
