@@ -64,16 +64,6 @@
   </a>
 </p>
 
-- [🪴 Overview](#-overview)
-  - [Features](#features)
-- [🌙 Installation](#-installation)
-- [🧙‍♂️ Usage and Configuration](#️-usage-and-configuration)
-  - [Basic Usage](#basic-usage)
-  - [Command-line Options](#command-line-options)
-    - [Specify a custom pyproject.toml path](#specify-a-custom-pyprojecttoml-path)
-    - [Exclude packages from updates](#exclude-packages-from-updates)
-    - [Preview changes without modifying files](#preview-changes-without-modifying-files)
-
 ## 🪴 Overview
 
 `uv-plugin-up` - is a plugin for automated dependency updates and version bumping in `pyproject.toml` files.
