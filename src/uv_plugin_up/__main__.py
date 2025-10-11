@@ -96,7 +96,7 @@ def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> 
                 uv.lock()
                 logger.info("Dependencies resolved")
             except Exception as exception:
-                logger.exception(  # noqa: PLE1205
+                logger.exception(
                     "Failed to lock the dependencies. Rolling back changes",
                     exception,
                 )

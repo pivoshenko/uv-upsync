@@ -40,19 +40,23 @@ def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:
 def get_dependency_name_and_operator(dependency_specifier: str) -> tuple[str, str]:
     valid_operators = ("===", "==", "~=", ">=", ">", "<=", "<")
     invalid_operators = ("^", "/", ":", "@")
-    match any(operator in dependency_specifier for operator in invalid_operators):
+
+    # Strip environment markers (everything after semicolon) before parsing
+    dependency_part = dependency_specifier.split(";")[0]
+
+    match any(operator in dependency_part for operator in invalid_operators):
         case True:
             raise exceptions.InvalidDependencySpecifierError(dependency_specifier)
         case False:
             pass
 
-    operators = re.findall("|".join(valid_operators), dependency_specifier)
+    operators = re.findall("|".join(valid_operators), dependency_part)
     match len(operators):
         case 0:
             raise exceptions.NoOperatorFoundError(dependency_specifier)
         case 1:
             operator, *_ = operators
-            dependency_name, *_ = dependency_specifier.replace(" ", "").split(operator)
+            dependency_name, *_ = dependency_part.replace(" ", "").split(operator)
             return dependency_name.strip(), operator.strip()
         case _:
             raise exceptions.MultipleOperatorsFoundError(dependency_specifier)
