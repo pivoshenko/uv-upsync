@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.1.1 (2025-10-11)
+
+### Chores
+
+- Update pyproject.toml with metadata, keywords, and classifiers
+  ([`4be0660`](https://github.com/pivoshenko/uv-plugin-up/commit/4be0660bc99e09b52e4f46429a2da4943462bc03))
+
+### Documentation
+
+- Remove TOC
+  ([`d0fd385`](https://github.com/pivoshenko/uv-plugin-up/commit/d0fd385e550701a35b2ac155cf83c99f5476957c))
+
+- Update notes
+  ([`ca6fd27`](https://github.com/pivoshenko/uv-plugin-up/commit/ca6fd27e384bad381750d0c98f5e6fd628d81732))
+
+
 ## v1.1.0 (2025-10-11)
 
 ### Bug Fixes
