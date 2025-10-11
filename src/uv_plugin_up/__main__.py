@@ -41,7 +41,7 @@ logger = logging.Logger()
     help="Preview changes without writing to pyproject.toml",
 )
 def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> None:  # noqa: C901, PLR0912
-    """uv-plugin-up - automated dependency updates and version bumping for pyproject.toml files."""
+    """uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."""  # noqa: E501
     with filepath.open() as toml_file:
         pyproject = tomlkit.load(toml_file)
         bk_pyproject = copy.deepcopy(pyproject)
