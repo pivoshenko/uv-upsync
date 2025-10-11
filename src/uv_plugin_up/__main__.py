@@ -31,7 +31,8 @@ logger = logging.Logger()
     type=click.STRING,
     multiple=True,
     default=(),
-    help="Packages to exclude from updating",
+    help="Packages to exclude from updating "
+    f"({click.style('multiple values allowed', fg='magenta')})",
 )
 @click.option(
     "--dry-run",
