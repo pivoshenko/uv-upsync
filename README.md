@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="logo" src="https://github.com/pivoshenko/uv-plugin-up/blob/main/docs/assets/logo.svg?raw=True" height=200>
+  <img alt="logo" src="https://github.com/pivoshenko/uv-plugin-up/blob/main/assets/logo.svg?raw=True" height=200>
 </div>
 
 <br>
