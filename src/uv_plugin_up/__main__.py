@@ -35,13 +35,28 @@ logger = logging.Logger()
     f"({click.style('multiple values allowed', fg='magenta')})",
 )
 @click.option(
+    "--group",
+    type=click.STRING,
+    multiple=True,
+    default=(),
+    help="Specific dependency group(s) to update. Can be 'project', optional-dependencies names, "
+    f"or dependency-groups names ({click.style('multiple values allowed', fg='magenta')}). "
+    "If not specified, all groups are updated.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     type=click.BOOL,
     default=False,
     help="Preview changes without writing to pyproject.toml",
 )
-def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> None:  # noqa: C901, PLR0912
+def main(  # noqa: C901, PLR0912, PLR0915
+    filepath: pathlib.Path,
+    exclude: tuple[str, ...],
+    group: tuple[str, ...],
+    *,
+    dry_run: bool,
+) -> None:
     """uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."""  # noqa: E501
     with filepath.open() as toml_file:
         pyproject = tomlkit.load(toml_file)
@@ -50,9 +65,17 @@ def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> 
     dependencies_groups = parsers.get_dependencies_groups(pyproject)
 
     for group_name, dependency_group in dependencies_groups.items():
-        logger.info(f"Updating dependencies in {group_name!r} group")
         match group_name:
             case "project":
+                match group:
+                    case () if not group:
+                        pass
+                    case _ if "project" in group:
+                        pass
+                    case _:
+                        logger.warning("Skipping 'project' dependencies")
+                        continue
+
                 updated_dependency_specifiers = parsers.update_dependency_specifiers(
                     dependency_group,
                     exclude,
@@ -63,7 +86,16 @@ def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> 
 
             case "optional-dependencies":
                 dependency_groups = pyproject["project"][group_name]  # type: ignore[index]
-                for dependency_specifiers in dependency_groups.values():  # type: ignore[union-attr]
+                for subgroup_name, dependency_specifiers in dependency_groups.items():  # type: ignore[union-attr]
+                    match group:
+                        case () if not group:
+                            pass
+                        case _ if subgroup_name in group:
+                            pass
+                        case _:
+                            logger.warning(f"Skipping 'optional-dependencies.{subgroup_name}'")
+                            continue
+
                     updated_dependency_specifiers = parsers.update_dependency_specifiers(
                         dependency_specifiers,
                         exclude,
@@ -73,7 +105,16 @@ def main(filepath: pathlib.Path, exclude: tuple[str, ...], *, dry_run: bool) -> 
 
             case "dependency-groups":
                 dependency_groups = pyproject[group_name]
-                for dependency_specifiers in dependency_groups.values():  # type: ignore[union-attr]
+                for subgroup_name, dependency_specifiers in dependency_groups.items():  # type: ignore[union-attr]
+                    match group:
+                        case () if not group:
+                            pass
+                        case _ if subgroup_name in group:
+                            pass
+                        case _:
+                            logger.warning(f"Skipping 'dependency-groups.{subgroup_name}'")
+                            continue
+
                     updated_dependency_specifiers = parsers.update_dependency_specifiers(
                         dependency_specifiers,
                         exclude,

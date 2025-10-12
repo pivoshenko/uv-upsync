@@ -64,6 +64,19 @@
   </a>
 </p>
 
+- [Overview](#overview)
+  - [Features](#features)
+- [Installation](#installation)
+- [Usage and Configuration](#usage-and-configuration)
+  - [Command-line Options](#command-line-options)
+    - [`filepath`](#filepath)
+    - [`exclude`](#exclude)
+    - [`group`](#group)
+    - [`dry-run`](#dry-run)
+- [Examples](#examples)
+  - [Excluding specific packages](#excluding-specific-packages)
+  - [Updating specific dependency groups](#updating-specific-dependency-groups)
+
 ## Overview
 
 `uv-plugin-up` - is a plugin for automated dependency updates and version bumping in `pyproject.toml` files.
@@ -73,7 +86,8 @@
 - Fully type-safe
 - Automatically updates dependencies to their latest versions from PyPI
 - Multiple dependency groups support - handles `project.dependencies`, `project.optional-dependencies`, and `dependency-groups`
-- Selective updates - exclude specific packages from being updated
+- Selective group updates - target specific dependency groups for updates (e.g., only update project dependencies or specific optional-dependencies groups)
+- Selective package exclusion - exclude specific packages from being updated
 - Dry-run mode - preview changes without modifying files
 - Safe updates - automatically runs `uv lock` after updates and rolls back on failure
 
@@ -115,6 +129,16 @@ Specifies the path to the `pyproject.toml` file. If your project file is located
 
 Specifies packages to exclude from updating. You can provide multiple package names to prevent them from being updated.
 
+#### `group`
+
+**Type**: `str`
+
+**Default**: `()`
+
+**Multiple values**: `allowed`
+
+Specifies which dependency group(s) to update. You can target specific groups like `project` (for project.dependencies), optional-dependencies names, or dependency-groups names. If not specified, all groups are updated. This is useful when you want to update only certain parts of your dependencies.
+
 #### `dry-run`
 
 **Type**: `bool`
@@ -125,10 +149,11 @@ Enables preview mode where changes are displayed without modifying the `pyprojec
 
 ## Examples
 
+### Excluding specific packages
+
 ```bash
 uv-plugin-up --exclude click
 
-# Updating dependencies in 'project' group
 # Skipping 'click>=8.1.8' (excluded)
 # Skipping 'httpx>=0.28.1' (no new version available)
 # Skipping 'tomlkit>=0.13.3' (no new version available)
@@ -149,4 +174,22 @@ uv-plugin-up --exclude click
 # Skipping 'pytest-sugar>=1.1.1' (no new version available)
 # Skipping 'sh>=2.2.2' (no new version available)
 # Skipping 'xdoctest>=1.3.0' (no new version available)
+```
+
+### Updating specific dependency groups
+
+```bash
+# Update only project dependencies
+uv-plugin-up --group project
+
+# Update only dev dependencies (assuming you have a 'dev' group)
+uv-plugin-up --group dev
+
+# Update multiple specific groups
+uv-plugin-up --group project --group test
+
+# Skipping 'optional-dependencies.dev' (skipping because not in specified groups)
+# Skipping 'dependency-groups.test' (skipping because not in specified groups)
+# Updating dependencies in 'project' group
+# ...
 ```
