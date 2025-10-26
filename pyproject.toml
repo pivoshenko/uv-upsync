@@ -86,7 +86,7 @@ strict = true
 warn_unused_configs = true
 
 [tool.pytest.ini_options]
-addopts = ["--basetemp=tests/fixtures", "--color=yes", "--cov=src", "--cov-report=xml", "--cov-report=html", "--xdoc"]
+addopts = ["--basetemp=tests/fixtures", "--color=yes", "--cov=src", "--cov-report=xml", "--cov-report=html"]
 testpaths = ["tests"]
 
 [tool.ruff]
