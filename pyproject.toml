@@ -59,17 +59,16 @@ uv-plugin-up = "uv_plugin_up.__main__:main"
 [dependency-groups]
 ci = ["python-semantic-release~=10.4.1"]
 dev = ["poethepoet>=0.37.0"]
-formatters = ["pyupgrade>=3.21.0", "ruff>=0.14.0"]
-linters = ["commitizen>=4.9.1", "mypy>=1.18.2", "ruff>=0.14.0"]
+formatters = ["pyupgrade>=3.21.0", "ruff>=0.14.2"]
+linters = ["commitizen>=4.9.1", "mypy>=1.18.2", "ruff>=0.14.2"]
 tests = [
-  "coverage[toml]>=7.10.7",
-  "pytest==7.4.4",
+  "coverage[toml]>=7.11.0",
+  "pytest>=8.4.2",
   "pytest-cov>=7.0.0",
   "pytest-lazy-fixture>=0.6.3",
   "pytest-mock>=3.15.1",
   "pytest-sugar>=1.1.1",
   "sh>=2.2.2",
-  "xdoctest>=1.3.0"
 ]
 
 [tool.commitizen]
