@@ -2,6 +2,41 @@
 
 <!-- version list -->
 
+## v2.0.0 (2025-10-28)
+
+### Build System
+
+- Downgrade Pytest
+  ([`9e9e324`](https://github.com/pivoshenko/uv-upsync/commit/9e9e3245aa074559b6243c45fd98cc4b4d07a795))
+
+- Update dev dependencies
+  ([`86074b4`](https://github.com/pivoshenko/uv-upsync/commit/86074b4d0bd187b60ab424bad32e066601b2e07a))
+
+- Update dev dependencies
+  ([`ce1fd09`](https://github.com/pivoshenko/uv-upsync/commit/ce1fd095b3f9aa6bf92ebf5d2c8345e2c44a779f))
+
+### Continuous Integration
+
+- Remove unused pytest option from configuration
+  ([`27e0603`](https://github.com/pivoshenko/uv-upsync/commit/27e060330879d0295e7c951a10e7b527c14f2f00))
+
+- Update codecov action version
+  ([`a18066e`](https://github.com/pivoshenko/uv-upsync/commit/a18066e9795e456c77c5436d8aac381c4c60e7cc))
+
+### Documentation
+
+- Update notes
+  ([`397e7b1`](https://github.com/pivoshenko/uv-upsync/commit/397e7b14759df8aa3e556123b46d219035216b0b))
+
+### Features
+
+- Add support for updating specific dependency groups
+  ([`933b9d9`](https://github.com/pivoshenko/uv-upsync/commit/933b9d9ee5b630001b4d067f31eaa29d5c05025a))
+
+- Rename project from uv-plugin-up to uv-upsync and update related assets
+  ([`c1902fd`](https://github.com/pivoshenko/uv-upsync/commit/c1902fd8b3a43fa61705be21741d1fd3634dae91))
+
+
 ## v1.1.2 (2025-10-11)
 
 ### Documentation

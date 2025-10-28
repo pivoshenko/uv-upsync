@@ -1,6 +1,6 @@
 [project]
 name = "uv-upsync"
-version = "1.1.2"
+version = "2.0.0"
 description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 license = "MIT"
 authors = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
