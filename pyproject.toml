@@ -75,7 +75,7 @@ tests = [
 ]
 
 [tool.commitizen]
-allowed_prefixes = ["0", "1", "Initial", "Merge"]
+allowed_prefixes = ["0", "1", "2", "Initial", "Merge"]
 
 [tool.coverage.run]
 omit = ["*/__init__.py", "*/__main__.py"]
