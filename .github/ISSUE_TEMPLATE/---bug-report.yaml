@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thank you for taking the time to file a complete bug report.
-        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-plugin-up/blob/main/CONTRIBUTING.md).
+        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-upsync/blob/main/CONTRIBUTING.md).
         Feel free to use Markdown syntax in text areas.
 
   - type: textarea
@@ -16,7 +16,7 @@ body:
       description: |
         Please describe what happened, with as much pertinent information as possible.
         If applicable, add screenshots to help explain your problem.
-        Also, ensure that the feature is not already implemented in the [latest](https://github.com/pivoshenko/uv-plugin-up/releases/latest) release.
+        Also, ensure that the feature is not already implemented in the [latest](https://github.com/pivoshenko/uv-upsync/releases/latest) release.
     validations:
       required: true
 
@@ -47,9 +47,9 @@ body:
 
   - type: input
     attributes:
-      label: uv-plugin-up version
+      label: uv-upsync version
       description: |
-        Please attach the output from `uv pip show uv-plugin-up`
+        Please attach the output from `uv pip show uv-upsync`
     validations:
       required: true
 

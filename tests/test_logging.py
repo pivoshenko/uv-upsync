@@ -6,7 +6,7 @@ import typing
 
 import pytest
 
-from uv_plugin_up import logging
+from uv_upsync import logging
 
 
 if typing.TYPE_CHECKING:

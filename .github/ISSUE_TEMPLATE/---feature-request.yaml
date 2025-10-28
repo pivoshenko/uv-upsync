@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thank you for taking the time to submit a complete feature request.
-        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-plugin-up/blob/main/CONTRIBUTING.md).
+        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-upsync/blob/main/CONTRIBUTING.md).
         For trivial improvements, please consider submitting a pull request instead.
         Feel free to use Markdown syntax in all text areas.
 

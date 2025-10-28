@@ -1,4 +1,4 @@
-"""Module that contains the main entry point for the uv-plugin-up plugin."""
+"""Module that contains the main entry point for the uv-upsync."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ import pathlib
 import click
 import tomlkit
 
-from uv_plugin_up import commands
-from uv_plugin_up import logging
-from uv_plugin_up import parsers
-from uv_plugin_up import uv
+from uv_upsync import commands
+from uv_upsync import logging
+from uv_upsync import parsers
+from uv_upsync import uv
 
 
 logger = logging.Logger()
@@ -57,7 +57,7 @@ def main(  # noqa: C901, PLR0912, PLR0915
     *,
     dry_run: bool,
 ) -> None:
-    """uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."""  # noqa: E501
+    """uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."""  # noqa: E501
     with filepath.open() as toml_file:
         pyproject = tomlkit.load(toml_file)
         bk_pyproject = copy.deepcopy(pyproject)

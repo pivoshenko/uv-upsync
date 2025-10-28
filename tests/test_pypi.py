@@ -11,7 +11,7 @@ import pytest
 if typing.TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-from uv_plugin_up import pypi
+from uv_upsync import pypi
 
 
 @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ def test_fetch_latest_dependency_version_http_error(
     )
 
     mocker.patch("httpx.get", return_value=mock_response)
-    mocker.patch("uv_plugin_up.logging.Logger.exception")
+    mocker.patch("uv_upsync.logging.Logger.exception")
 
     version = pypi.fetch_latest_dependency_version(dependency_name)
     assert version is None

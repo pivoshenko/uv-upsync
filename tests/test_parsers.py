@@ -7,8 +7,8 @@ import typing
 import pytest
 import tomlkit
 
-from uv_plugin_up import exceptions
-from uv_plugin_up import parsers
+from uv_upsync import exceptions
+from uv_upsync import parsers
 
 
 if typing.TYPE_CHECKING:
@@ -140,11 +140,11 @@ def test_update_dependency_specifier(
     should_update: bool,
 ) -> None:
     mock_fetch = mocker.patch(
-        "uv_plugin_up.pypi.fetch_latest_dependency_version",
+        "uv_upsync.pypi.fetch_latest_dependency_version",
         return_value="9.9.9",
     )
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     specifier = parsers.update_dependency_specifier(dependency_specifier, exclude)
 
@@ -172,20 +172,20 @@ def test_update_dependency_specifier_with_version(
     expected_specifier: str,
 ) -> None:
     mocker.patch(
-        "uv_plugin_up.pypi.fetch_latest_dependency_version",
+        "uv_upsync.pypi.fetch_latest_dependency_version",
         return_value=latest_version,
     )
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     specifier = parsers.update_dependency_specifier(dependency_specifier, ())
     assert specifier == expected_specifier
 
 
 def test_update_dependency_specifier_fetch_returns_none(mocker: MockerFixture) -> None:
-    mocker.patch("uv_plugin_up.pypi.fetch_latest_dependency_version", return_value=None)
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.pypi.fetch_latest_dependency_version", return_value=None)
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     dependency_specifier = "click>=8.0.0"
     specifier = parsers.update_dependency_specifier(dependency_specifier, ())
@@ -207,17 +207,17 @@ def test_update_dependency_specifiers(
     exclude: tuple[str, ...],
     expected_count: int,
 ) -> None:
-    mocker.patch("uv_plugin_up.pypi.fetch_latest_dependency_version", return_value="9.9.9")
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.pypi.fetch_latest_dependency_version", return_value="9.9.9")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     specifiers = parsers.update_dependency_specifiers(dependency_specifiers, exclude)
     assert len(specifiers) == expected_count
 
 
 def test_update_dependency_specifiers_with_inline_table(mocker: MockerFixture) -> None:
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     inline_table = tomlkit.inline_table()
     inline_table["git"] = "https://github.com/user/repo.git"
@@ -230,9 +230,9 @@ def test_update_dependency_specifiers_with_inline_table(mocker: MockerFixture) -
 
 
 def test_update_dependency_specifiers_with_invalid_specifier(mocker: MockerFixture) -> None:
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
-    mocker.patch("uv_plugin_up.logging.Logger.exception")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
+    mocker.patch("uv_upsync.logging.Logger.exception")
 
     dependency_specifiers = ["invalid^1.0.0"]
     specifiers = parsers.update_dependency_specifiers(dependency_specifiers, ())
@@ -254,11 +254,11 @@ def test_update_dependency_specifiers_with_exclusions(
     exclude: tuple[str, ...],
 ) -> None:
     mocker.patch(
-        "uv_plugin_up.pypi.fetch_latest_dependency_version",
+        "uv_upsync.pypi.fetch_latest_dependency_version",
         return_value="9.9.9",
     )
-    mocker.patch("uv_plugin_up.logging.Logger.warning")
-    mocker.patch("uv_plugin_up.logging.Logger.info")
+    mocker.patch("uv_upsync.logging.Logger.warning")
+    mocker.patch("uv_upsync.logging.Logger.info")
 
     specifiers = parsers.update_dependency_specifiers(dependency_specifiers, exclude)
 

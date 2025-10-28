@@ -1,21 +1,21 @@
 <div align="center">
-  <img alt="logo" src="https://github.com/pivoshenko/uv-plugin-up/blob/main/assets/logo.svg?raw=True" height=200>
+  <img alt="logo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/logo.svg?raw=True" height=200>
 </div>
 
 <br>
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT">
-    <img alt="License" src="https://img.shields.io/pypi/l/uv-plugin-up?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0A6847&label=License">
+    <img alt="License" src="https://img.shields.io/pypi/l/uv-upsync?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0A6847&label=License">
   </a>
-  <a href="https://pypi.org/project/uv-plugin-up">
-    <img alt="Python" src="https://img.shields.io/pypi/pyversions/uv-plugin-up?style=flat-square&logo=python&logoColor=white&color=4856CD&label=Python">
+  <a href="https://pypi.org/project/uv-upsync">
+    <img alt="Python" src="https://img.shields.io/pypi/pyversions/uv-upsync?style=flat-square&logo=python&logoColor=white&color=4856CD&label=Python">
   </a>
-  <a href="https://pypi.org/project/uv-plugin-up">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-plugin-up?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
+  <a href="https://pypi.org/project/uv-upsync">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-upsync?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
   </a>
-  <a href="https://github.com/pivoshenko/uv-plugin-up/releases">
-    <img alt="Release" src="https://img.shields.io/github/v/release/pivoshenko/uv-plugin-up?style=flat-square&logo=github&logoColor=white&color=4856CD&label=Release">
+  <a href="https://github.com/pivoshenko/uv-upsync/releases">
+    <img alt="Release" src="https://img.shields.io/github/v/release/pivoshenko/uv-upsync?style=flat-square&logo=github&logoColor=white&color=4856CD&label=Release">
   </a>
 </p>
 
@@ -35,26 +35,26 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/pivoshenko/uv-plugin-up/actions/workflows/tests.yaml">
-    <img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-plugin-up/tests.yaml?label=Tests&style=flat-square&logo=pytest&logoColor=white&color=0A6847">
+  <a href="https://github.com/pivoshenko/uv-upsync/actions/workflows/tests.yaml">
+    <img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-upsync/tests.yaml?label=Tests&style=flat-square&logo=pytest&logoColor=white&color=0A6847">
   </a>
-  <a href="https://github.com/pivoshenko/uv-plugin-up/actions/workflows/linters.yaml">
-    <img alt="Linters" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-plugin-up/linters.yaml?label=Linters&style=flat-square&logo=lintcode&logoColor=white&color=0A6847">
+  <a href="https://github.com/pivoshenko/uv-upsync/actions/workflows/linters.yaml">
+    <img alt="Linters" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-upsync/linters.yaml?label=Linters&style=flat-square&logo=lintcode&logoColor=white&color=0A6847">
   </a>
-  <a href="https://github.com/pivoshenko/uv-plugin-up/actions/workflows/release.yaml">
-    <img alt="Release" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-plugin-up/release.yaml?label=Release&style=flat-square&logo=pypi&logoColor=white&color=0A6847">
+  <a href="https://github.com/pivoshenko/uv-upsync/actions/workflows/release.yaml">
+    <img alt="Release" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-upsync/release.yaml?label=Release&style=flat-square&logo=pypi&logoColor=white&color=0A6847">
   </a>
-  <a href="https://codecov.io/gh/pivoshenko/uv-plugin-up" >
-    <img alt="Codecov" src="https://img.shields.io/codecov/c/gh/pivoshenko/uv-plugin-up?token=cqRQxVnDR6&style=flat-square&logo=codecov&logoColor=white&color=0A6847&label=Coverage"/>
+  <a href="https://codecov.io/gh/pivoshenko/uv-upsync" >
+    <img alt="Codecov" src="https://img.shields.io/codecov/c/gh/pivoshenko/uv-upsync?token=cqRQxVnDR6&style=flat-square&logo=codecov&logoColor=white&color=0A6847&label=Coverage"/>
   </a>
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/uv-plugin-up">
-    <img alt="Downloads" src="https://img.shields.io/pypi/dm/uv-plugin-up?style=flat-square&logo=pythonanywhere&logoColor=white&color=4856CD&label=Downloads">
+  <a href="https://pypi.org/project/uv-upsync">
+    <img alt="Downloads" src="https://img.shields.io/pypi/dm/uv-upsync?style=flat-square&logo=pythonanywhere&logoColor=white&color=4856CD&label=Downloads">
   </a>
-  <a href="https://github.com/pivoshenko/uv-plugin-up">
-    <img alt="Stars" src="https://img.shields.io/github/stars/pivoshenko/uv-plugin-up?style=flat-square&logo=apachespark&logoColor=white&color=4856CD&label=Stars">
+  <a href="https://github.com/pivoshenko/uv-upsync">
+    <img alt="Stars" src="https://img.shields.io/github/stars/pivoshenko/uv-upsync?style=flat-square&logo=apachespark&logoColor=white&color=4856CD&label=Stars">
   </a>
 </p>
 
@@ -79,7 +79,7 @@
 
 ## Overview
 
-`uv-plugin-up` - is a plugin for automated dependency updates and version bumping in `pyproject.toml` files.
+`uv-upsync` - is a tool/plugin for automated dependency updates and version bumping in `pyproject.toml`.
 
 ### Features
 
@@ -93,18 +93,26 @@
 
 ## Installation
 
-```bash
-uv add --dev uv-plugin-up
+Proceed by installing the tool and running it:
+
+```shell
+uvx uv-upsync
+```
+
+Alternatively, you can add it into your development dependencies:
+
+```shell
+uv add --dev uv-upsync
 # or
-uv add uv-plugin-up --group dev
+uv add uv-upsync --group dev
 ```
 
 ## Usage and Configuration
 
-By default, the plugin updates all dependencies in the `pyproject.toml`:
+By default, `uv-upsync` updates all dependencies in the `pyproject.toml`:
 
-```bash
-uv-plugin-up
+```shell
+uv-upsync
 ```
 
 ### Command-line Options
@@ -151,8 +159,8 @@ Enables preview mode where changes are displayed without modifying the `pyprojec
 
 ### Excluding specific packages
 
-```bash
-uv-plugin-up --exclude click
+```shell
+uv-upsync --exclude click
 
 # Skipping 'click>=8.1.8' (excluded)
 # Skipping 'httpx>=0.28.1' (no new version available)
@@ -178,15 +186,15 @@ uv-plugin-up --exclude click
 
 ### Updating specific dependency groups
 
-```bash
+```shell
 # Update only project dependencies
-uv-plugin-up --group project
+uv-upsync --group project
 
 # Update only dev dependencies (assuming you have a 'dev' group)
-uv-plugin-up --group dev
+uv-upsync --group dev
 
 # Update multiple specific groups
-uv-plugin-up --group project --group test
+uv-upsync --group project --group test
 
 # Skipping 'optional-dependencies.dev' (skipping because not in specified groups)
 # Skipping 'dependency-groups.test' (skipping because not in specified groups)

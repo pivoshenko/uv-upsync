@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thank you for taking the time to file a complete documentation issue.
-        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-plugin-up/blob/main/CONTRIBUTING.md).
+        Before submitting your issue, please review [the contribution guidelines](https://github.com/pivoshenko/uv-upsync/blob/main/CONTRIBUTING.md).
         Feel free to use Markdown syntax in the text areas.
 
   - type: dropdown

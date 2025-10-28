@@ -1,7 +1,7 @@
 [project]
-name = "uv-plugin-up"
+name = "uv-upsync"
 version = "1.1.2"
-description = "uv-plugin-up - is a plugin for automated dependency updates and version bumping in pyproject.toml files."
+description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 license = "MIT"
 authors = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
 maintainers = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenko@gmail.com" }]
@@ -19,6 +19,9 @@ keywords = [
   "packaging-upgrade",
   "plugin",
   "plugins",
+  "cli",
+  "cli-tool",
+  "cli-tools",
   "uv",
   "uv-plugin",
   "uv-plugins",
@@ -50,11 +53,11 @@ requires-python = ">=3.10"
 dependencies = ["click>=8.1.8", "httpx>=0.28.1", "tomlkit>=0.13.3"]
 
 [project.urls]
-Homepage = "https://github.com/pivoshenko/uv-plugin-up"
-Repository = "https://github.com/pivoshenko/uv-plugin-up"
+Homepage = "https://github.com/pivoshenko/uv-upsync"
+Repository = "https://github.com/pivoshenko/uv-upsync"
 
 [project.scripts]
-uv-plugin-up = "uv_plugin_up.__main__:main"
+uv-upsync = "uv_upsync.__main__:main"
 
 [dependency-groups]
 ci = ["python-semantic-release~=10.4.1"]
@@ -68,7 +71,7 @@ tests = [
   "pytest-lazy-fixture>=0.6.3",
   "pytest-mock>=3.15.1",
   "pytest-sugar>=1.1.1",
-  "sh>=2.2.2",
+  "sh>=2.2.2"
 ]
 
 [tool.commitizen]
@@ -120,7 +123,7 @@ commit_author = "github-actions <github-actions@github.com>"
 exclude_commit_patterns = ["Merge pull request"]
 logging_use_named_masks = true
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/uv_plugin_up/__init__.py:__version__"]
+version_variables = ["src/uv_upsync/__init__.py:__version__"]
 
 [tool.semantic_release.changelog]
 exclude_commit_patterns = ['''Merged? .*''', '''Initial Commit.*''', '''^\d+\.\d+\.\d+''']

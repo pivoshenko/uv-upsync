@@ -6,9 +6,9 @@ import re
 
 import tomlkit
 
-from uv_plugin_up import exceptions
-from uv_plugin_up import logging
-from uv_plugin_up import pypi
+from uv_upsync import exceptions
+from uv_upsync import logging
+from uv_upsync import pypi
 
 
 logger = logging.Logger()

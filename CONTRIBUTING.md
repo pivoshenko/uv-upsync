@@ -12,11 +12,11 @@
 
 First, thank you for taking the time to contribute!
 
-The following guidelines are for contributing to `uv-plugin-up`. These are mostly guidelines, not strict rules. Use your best judgement, and feel free to propose changes to this document in a pull request.
+The following guidelines are for contributing to `uv-upsync`. These are mostly guidelines, not strict rules. Use your best judgement, and feel free to propose changes to this document in a pull request.
 
 ## Reporting Bugs
 
-This section guides you through submitting a bug report for `uv-plugin-up`. Following these guidelines will help maintainers and the community understand your report, reproduce the behaviour, and find related reports.
+This section guides you through submitting a bug report for `uv-upsync`. Following these guidelines will help maintainers and the community understand your report, reproduce the behaviour, and find related reports.
 
 Before submitting bug reports, please check if your issue already exists in the issue tracker. When creating a bug report, please include as many details as possible. Filling out the required template will help maintainers resolve the issue faster.
 
@@ -25,7 +25,7 @@ Before submitting bug reports, please check if your issue already exists in the 
 
 ### How Do I Submit a Bug Report?
 
-Bugs concerning `uv-plugin-up` should be submitted to the main issue tracker using the appropriate issue template.
+Bugs concerning `uv-upsync` should be submitted to the main issue tracker using the appropriate issue template.
 
 Please follow these steps to explain the problem clearly and make it easier for others to search for and understand:
 
@@ -43,13 +43,13 @@ Provide detailed steps to reproduce your issue:
 
 Additional context can help:
 
-- Did the problem start after an update (e.g., to a new version of `uv-plugin-up`), or was it always present?
+- Did the problem start after an update (e.g., to a new version of `uv-upsync`), or was it always present?
 - If the problem started recently, can you reproduce it in an older version? Which version was the last working one?
 - Are there any unusual aspects of your environment (e.g., special container images or Apple Silicon CPUs)?
 
 Include details about your environment:
 
-- Which version of `uv` and `uv-plugin-up` are you using?
+- Which version of `uv` and `uv-upsync` are you using?
 - Which version of Python is being used?
 - What's the name and version of your operating system?
 
@@ -57,7 +57,7 @@ To help others understand and reproduce your issue, provide thorough reproductio
 
 ## Suggesting Enhancements
 
-This section provides guidance on submitting enhancement suggestions for `uv-plugin-up`, including entirely new features and improvements to existing functionality. Following these guidelines will help maintainers and the community understand your suggestion and identify related suggestions.
+This section provides guidance on submitting enhancement suggestions for `uv-upsync`, including entirely new features and improvements to existing functionality. Following these guidelines will help maintainers and the community understand your suggestion and identify related suggestions.
 
 Before creating an enhancement suggestion, please check this list to see if your suggestion already exists. When submitting an enhancement, include as many details as possible, and fill out the template with steps you would take if the requested feature were implemented.
 
@@ -73,7 +73,7 @@ Enhancement suggestions should be submitted to the main issue tracker, using the
 
 ### Local Development
 
-First, fork the `uv-plugin-up` repository and clone it locally to make pull requests against the project.
+First, fork the `uv-upsync` repository and clone it locally to make pull requests against the project.
 
 If you're new to `git` and pull request-based development, GitHub offers a helpful [guide](https://docs.github.com/en/get-started/quickstart/contributing-to-projects).
 
@@ -84,7 +84,7 @@ uv install
 uv tests
 ```
 
-When contributing to `uv-plugin-up`, automated tools will be run to ensure your code is mergeable. You must make sure your code passes type checks and is formatted properly:
+When contributing to `uv-upsync`, automated tools will be run to ensure your code is mergeable. You must make sure your code passes type checks and is formatted properly:
 
 ```shell
 uv format

@@ -9,7 +9,7 @@ import pytest
 
 from click.testing import CliRunner
 
-from uv_plugin_up import commands
+from uv_upsync import commands
 
 
 if typing.TYPE_CHECKING:

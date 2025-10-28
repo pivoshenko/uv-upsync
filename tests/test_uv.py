@@ -7,8 +7,8 @@ import subprocess
 
 import pytest
 
-from uv_plugin_up import exceptions
-from uv_plugin_up import uv
+from uv_upsync import exceptions
+from uv_upsync import uv
 
 
 if typing.TYPE_CHECKING:

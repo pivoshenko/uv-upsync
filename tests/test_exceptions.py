@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from uv_plugin_up import exceptions
+from uv_upsync import exceptions
 
 
 @pytest.mark.parametrize(

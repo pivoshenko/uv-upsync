@@ -1199,7 +1199,7 @@ wheels = [
 ]
 
 [[package]]
-name = "uv-plugin-up"
+name = "uv-upsync"
 version = "1.1.2"
 source = { editable = "." }
 dependencies = [
