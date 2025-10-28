@@ -79,7 +79,7 @@
 
 ## Overview
 
-`uv-upsync` - is a tool/plugin for automated dependency updates and version bumping in `pyproject.toml`.
+`uv-upsync` - is a tool for automated dependency updates and version bumping in `pyproject.toml`.
 
 ### Features
 
