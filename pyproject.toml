@@ -62,8 +62,8 @@ uv-upsync = "uv_upsync.__main__:main"
 [dependency-groups]
 ci = ["python-semantic-release~=10.4.1"]
 dev = ["poethepoet>=0.37.0"]
-formatters = ["pyupgrade>=3.21.0", "ruff>=0.14.2"]
-linters = ["commitizen>=4.9.1", "mypy>=1.18.2", "ruff>=0.14.2"]
+formatters = ["pyupgrade>=3.21.0", "ruff>=0.14.3"]
+linters = ["commitizen>=4.9.1", "mypy>=1.18.2", "ruff>=0.14.3"]
 tests = [
   "coverage[toml]>=7.11.0",
   "pytest==7.4.4",
