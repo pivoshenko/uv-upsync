@@ -2,6 +2,32 @@
 
 <!-- version list -->
 
+## v2.0.1 (2025-11-02)
+
+### Build System
+
+- Update dev dependencies
+  ([`219e2d3`](https://github.com/pivoshenko/uv-upsync/commit/219e2d3629a801d82f49bc712307067b92f04dec))
+
+### Chores
+
+- Update .gitignore
+  ([`dd5b926`](https://github.com/pivoshenko/uv-upsync/commit/dd5b92682ecc1e4c278a518cd0c7c56b301b4217))
+
+- Update Commitizen config
+  ([`2feeeaf`](https://github.com/pivoshenko/uv-upsync/commit/2feeeaf3da7f4f719cd23a6c78010b7a95a43f84))
+
+### Code Style
+
+- Sort metadata keys
+  ([`454315b`](https://github.com/pivoshenko/uv-upsync/commit/454315b21cd068e08f1fe0e5cdfe7daf1475e253))
+
+### Continuous Integration
+
+- Remove force option from semantic release configuration
+  ([`ee8399c`](https://github.com/pivoshenko/uv-upsync/commit/ee8399c762a8def4e920519144ff0fa7938d296f))
+
+
 ## v2.0.0 (2025-10-28)
 
 ### Build System
