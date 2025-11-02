@@ -50,7 +50,7 @@ maintainers = [{ "name" = "Volodymyr Pivoshenko", "email" = "volodymyr.pivoshenk
 name = "uv-upsync"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "2.0.1"
+version = "2.0.2"
 
 [project.scripts]
 uv-upsync = "uv_upsync.__main__:main"

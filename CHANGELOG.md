@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.0.2 (2025-11-02)
+
+### Documentation
+
+- Update contribution instructions for testing and formatting commands
+  ([`03b2b76`](https://github.com/pivoshenko/uv-upsync/commit/03b2b768f183204e5d579f497a193d77efd88390))
+
+
 ## v2.0.1 (2025-11-02)
 
 ### Build System
