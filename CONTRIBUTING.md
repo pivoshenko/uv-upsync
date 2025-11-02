@@ -80,15 +80,15 @@ If you're new to `git` and pull request-based development, GitHub offers a helpf
 Next, install dependencies and run the test suite to ensure everything is working as expected:
 
 ```shell
-uv install
-uv tests
+uv sync --all-groups --all-extras -U
+uv run poe tests
 ```
 
 When contributing to `uv-upsync`, automated tools will be run to ensure your code is mergeable. You must make sure your code passes type checks and is formatted properly:
 
 ```shell
-uv format
-uv lint
+uv run poe format
+uv run poe lint
 ```
 
 > [!IMPORTANT]
