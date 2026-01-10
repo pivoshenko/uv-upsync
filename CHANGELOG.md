@@ -2,6 +2,42 @@
 
 <!-- version list -->
 
+## v2.0.3 (2026-01-10)
+
+### Build System
+
+- Update dev dependencies
+  ([`7f47498`](https://github.com/pivoshenko/uv-upsync/commit/7f474982a91b84275d15086e827af48379eef5bc))
+
+- Update dev dependencies
+  ([`b95ea2e`](https://github.com/pivoshenko/uv-upsync/commit/b95ea2e883113df0ac8f80c1d26a8cf911c3c305))
+
+- Update dev dependencies
+  ([`a43c1b8`](https://github.com/pivoshenko/uv-upsync/commit/a43c1b825c345a265ebec962542a13b7b827547f))
+
+- Update dev dependencies
+  ([`85fa4df`](https://github.com/pivoshenko/uv-upsync/commit/85fa4df7c9290057a2e4130b8046edfad14d9a98))
+
+- Update dev dependencies
+  ([`8077cdd`](https://github.com/pivoshenko/uv-upsync/commit/8077cdda5dee2278151b0c0d0275989898d4542a))
+
+### Continuous Integration
+
+- Update semantic release action version
+  ([`71c4538`](https://github.com/pivoshenko/uv-upsync/commit/71c4538ad98337cce3c5e57f1ee9736057191bac))
+
+- Update version of the Checkout action
+  ([`5122582`](https://github.com/pivoshenko/uv-upsync/commit/512258236ade039fe1df2e205fead7ca50a03083))
+
+- Upgrade actions
+  ([`4c1e08b`](https://github.com/pivoshenko/uv-upsync/commit/4c1e08b237b7b82acde5499c53283631d9597b56))
+
+### Documentation
+
+- Update license
+  ([`ad76913`](https://github.com/pivoshenko/uv-upsync/commit/ad76913c6a0772a775934c6cad7a599e3d7e019e))
+
+
 ## v2.0.2 (2025-11-02)
 
 ### Documentation
