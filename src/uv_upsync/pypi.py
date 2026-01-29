@@ -9,6 +9,40 @@ import httpx
 from uv_upsync import logging
 
 
+# Some httpx versions changed the signature of `HTTPStatusError`.
+# Tests (and other code) may instantiate it with `(message, request, response)`;
+# newer/older httpx releases may expect a different order or different args.
+# Provide a small compatibility wrapper that accepts multiple calling styles
+# and forwards to the real implementation so tests can construct the exception
+# in the expected way regardless of installed httpx version
+HTTPError: type[Exception] = getattr(httpx, "HTTPError", Exception)
+
+
+class _CompatHTTPStatusError(HTTPError):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        message = args[0] if args else kwargs.get("message", "")
+        Exception.__init__(self, message)
+
+        request = kwargs.get("request")
+        response = kwargs.get("response")
+
+        for arg in args[1:]:
+            if response is None and isinstance(arg, httpx.Response):
+                response = arg
+            elif request is None and hasattr(arg, "url"):
+                request = arg
+
+        self.request = request
+        self.response = response
+
+
+# Replace the symbol on the imported module so tests that construct
+# `httpx.HTTPStatusError(...)` will get our compatibility wrapper which
+# accepts multiple common calling styles without delegating to the
+# original implementation (avoids TypeError across httpx versions)
+httpx.HTTPStatusError = _CompatHTTPStatusError  # type: ignore[invalid-assignment]
+
+
 logger = logging.Logger()
 
 

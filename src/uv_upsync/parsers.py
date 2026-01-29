@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import re
-from typing import Sequence
+
+from typing import TYPE_CHECKING
 
 import tomlkit
+
 from tomlkit import items
 
 from uv_upsync import exceptions
 from uv_upsync import logging
 from uv_upsync import pypi
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 logger = logging.Logger()
