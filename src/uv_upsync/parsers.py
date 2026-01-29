@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+from typing import Sequence
 
 import tomlkit
+from tomlkit import items
 
 from uv_upsync import exceptions
 from uv_upsync import logging
@@ -14,7 +16,7 @@ from uv_upsync import pypi
 logger = logging.Logger()
 
 
-def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:  # type: ignore[type-arg]
+def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:
     dependencies_groups = {}
 
     project_dependencies = list(pyproject["project"].get("dependencies", []))  # type: ignore[union-attr]
@@ -27,12 +29,12 @@ def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:
     optional_dependencies = dict(pyproject["project"].get("optional-dependencies", {}))  # type: ignore[union-attr]
     match optional_dependencies:
         case _ if optional_dependencies:
-            dependencies_groups.update({"optional-dependencies": optional_dependencies})  # type: ignore[dict-item]
+            dependencies_groups.update({"optional-dependencies": optional_dependencies})
 
     dependency_groups = dict(pyproject.get("dependency-groups", {}))
     match dependency_groups:
         case _ if dependency_groups:
-            dependencies_groups.update({"dependency-groups": dependency_groups})  # type: ignore[dict-item]
+            dependencies_groups.update({"dependency-groups": dependency_groups})
 
     return dependencies_groups
 
@@ -100,43 +102,45 @@ def update_dependency_specifier(dependency_specifier: str, exclude: tuple[str, .
 
 
 def update_dependency_specifiers(
-    dependency_specifiers: list[str],
+    dependency_specifiers: Sequence[object],
     exclude: tuple[str, ...],
-) -> list[str]:
+) -> list[object]:
     updated_dependency_specifiers = []
     for dependency_specifier in dependency_specifiers:
-        match any(d_exclude in dependency_specifier for d_exclude in exclude):
-            case True:
-                logger.warning(f"Skipping {dependency_specifier!r} (excluded)")
-                updated_dependency_specifiers.append(dependency_specifier)
-                continue
-            case False:
-                pass
-
-        match isinstance(dependency_specifier, tomlkit.items.InlineTable):
-            case True:
-                logger.warning(f"Skipping inline table: {dependency_specifier!r}")
-                updated_dependency_specifiers.append(dependency_specifier)
-                continue
-            case False:
-                pass
-
-        try:
-            get_dependency_name_and_operator(dependency_specifier)
-        except exceptions.BaseError as exception:
-            logger.exception(f"Skipping inline table: {dependency_specifier!r}", exception)
+        # Inline tables (tomlkit inline_table) are not string specifiers
+        if isinstance(dependency_specifier, items.InlineTable):
+            logger.warning(f"Skipping inline table: {dependency_specifier!r}")
             updated_dependency_specifiers.append(dependency_specifier)
             continue
 
-        updated_dependency_specifier = update_dependency_specifier(dependency_specifier, exclude)
-        match updated_dependency_specifier:
-            case _ if dependency_specifier != updated_dependency_specifier:
+        # Only strings are processed for version lookups and exclusions
+        if isinstance(dependency_specifier, str):
+            if any(d_exclude in dependency_specifier for d_exclude in exclude):
+                logger.warning(f"Skipping {dependency_specifier!r} (excluded)")
+                updated_dependency_specifiers.append(dependency_specifier)
+                continue
+
+            try:
+                get_dependency_name_and_operator(dependency_specifier)
+            except exceptions.BaseError as exception:
+                logger.exception(f"Skipping invalid specifier: {dependency_specifier!r}", exception)
+                updated_dependency_specifiers.append(dependency_specifier)
+                continue
+
+            updated_dependency_specifier = update_dependency_specifier(
+                dependency_specifier, exclude
+            )
+            if dependency_specifier != updated_dependency_specifier:
                 logger.info(
-                    f"Updating {dependency_specifier!r} to {updated_dependency_specifier!r}",
+                    f"Updating {dependency_specifier!r} to {updated_dependency_specifier!r}"
                 )
                 updated_dependency_specifiers.append(updated_dependency_specifier)
-            case _:
+            else:
                 logger.warning(f"Skipping {dependency_specifier!r} (no new version available)")
                 updated_dependency_specifiers.append(dependency_specifier)
+            continue
+
+        # Unknown types: append as-is
+        updated_dependency_specifiers.append(dependency_specifier)
 
     return updated_dependency_specifiers

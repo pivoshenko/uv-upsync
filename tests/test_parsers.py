@@ -222,7 +222,7 @@ def test_update_dependency_specifiers_with_inline_table(mocker: MockerFixture) -
     inline_table = tomlkit.inline_table()
     inline_table["git"] = "https://github.com/user/repo.git"
 
-    dependency_specifiers = [inline_table]  # type: ignore[list-item]
+    dependency_specifiers = [inline_table]
     specifiers = parsers.update_dependency_specifiers(dependency_specifiers, ())
 
     assert len(specifiers) == 1

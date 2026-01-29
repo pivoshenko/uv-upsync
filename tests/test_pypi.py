@@ -75,8 +75,8 @@ def test_fetch_latest_dependency_version_http_error(
     mock_response.status_code = status_code
     mock_response.raise_for_status.side_effect = error_type(
         "Error",
-        request=mocker.Mock(),
-        response=mock_response,
+        mocker.Mock(),
+        mock_response,
     )
 
     mocker.patch("httpx.get", return_value=mock_response)

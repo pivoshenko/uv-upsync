@@ -30,4 +30,4 @@ def fetch_latest_dependency_version(dependency_name: str) -> str | None:
         logger.exception(f"Failed to fetch latest version for {dependency_name!r}", exception)
         return None
 
-    return response.json()["info"]["version"]  # type: ignore[no-any-return]
+    return response.json()["info"]["version"]
