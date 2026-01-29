@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.1.0 (2026-01-29)
+
+### Bug Fixes
+
+- Add compatibility wrapper for HTTPStatusError
+  ([`52e568c`](https://github.com/pivoshenko/uv-upsync/commit/52e568c9a8e1de6ea5922bb46fae33ae811c0fe9))
+
+### Build System
+
+- Replace mypy with ty
+  ([`2b3f7b4`](https://github.com/pivoshenko/uv-upsync/commit/2b3f7b45e402eada570802757d364e335b536029))
+
+
 ## v2.0.3 (2026-01-10)
 
 ### Build System
