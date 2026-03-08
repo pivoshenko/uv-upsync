@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v2.2.0 (2026-03-08)
+
+### Bug Fixes
+
+- Update metadata
+  ([`dd76201`](https://github.com/pivoshenko/uv-upsync/commit/dd76201fb5332f5fdb412e74b575f89e9e50e657))
+
+### Build System
+
+- Update dev dependencies
+  ([`9cd1b8b`](https://github.com/pivoshenko/uv-upsync/commit/9cd1b8bf77d3c467db9f8adec7539db4b3600ce9))
+
+- Update dev dependencies
+  ([`12c5254`](https://github.com/pivoshenko/uv-upsync/commit/12c5254112e6e026cc6ee4691ea018d31229d4ac))
+
+### Chores
+
+- Update chore files
+  ([`7fd19a8`](https://github.com/pivoshenko/uv-upsync/commit/7fd19a8ee74f894e59c2937f6dc1a9c20d8bd56b))
+
+
 ## v2.1.0 (2026-01-29)
 
 ### Bug Fixes
