@@ -50,7 +50,7 @@ def get_dependency_name_and_operator(dependency_specifier: str) -> tuple[str, st
     invalid_operators = ("^", "/", ":", "@")
 
     # Strip environment markers (everything after semicolon) before parsing
-    dependency_part = dependency_specifier.split(";")[0]
+    dependency_part = dependency_specifier.split(";", maxsplit=1)[0]
 
     match any(operator in dependency_part for operator in invalid_operators):
         case True:

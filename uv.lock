@@ -1234,17 +1234,17 @@ ci = [{ name = "python-semantic-release", specifier = "~=10.5.3" }]
 dev = [{ name = "poethepoet", specifier = ">=0.42.1" }]
 formatters = [
     { name = "pyupgrade", specifier = ">=3.21.2" },
-    { name = "ruff", specifier = ">=0.15.6" },
+    { name = "ruff", specifier = ">=0.15.8" },
 ]
 linters = [
     { name = "commitizen", specifier = ">=4.13.9" },
-    { name = "ruff", specifier = ">=0.15.6" },
-    { name = "ty", specifier = ">=0.0.23" },
+    { name = "ruff", specifier = ">=0.15.8" },
+    { name = "ty", specifier = ">=0.0.26" },
 ]
 tests = [
-    { name = "coverage", extras = ["toml"], specifier = ">=7.13.4" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.13.5" },
     { name = "pytest", specifier = "==7.4.4" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-lazy-fixture", specifier = ">=0.6.3" },
     { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "pytest-sugar", specifier = ">=1.1.1" },
