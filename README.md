@@ -28,19 +28,6 @@
   </a>
 </p>
 
-- [Overview](#overview)
-  - [Features](#features)
-- [Installation](#installation)
-- [Usage and Configuration](#usage-and-configuration)
-  - [Command-line Options](#command-line-options)
-    - [`filepath`](#filepath)
-    - [`exclude`](#exclude)
-    - [`group`](#group)
-    - [`dry-run`](#dry-run)
-- [Examples](#examples)
-  - [Excluding specific packages](#excluding-specific-packages)
-  - [Updating specific dependency groups](#updating-specific-dependency-groups)
-
 ## Overview
 
 `uv-upsync` - is a tool for automated dependency updates and version bumping in `pyproject.toml`.
