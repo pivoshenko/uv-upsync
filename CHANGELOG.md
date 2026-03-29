@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v2.3.0 (2026-03-29)
+
+### Build System
+
+- Update dependencies
+  ([`041cc55`](https://github.com/pivoshenko/uv-upsync/commit/041cc551127d8228e351803daf9673b43a638a1a))
+
+- Update dependencies
+  ([`ca5c1c2`](https://github.com/pivoshenko/uv-upsync/commit/ca5c1c2904859ea6f860c27aa4713355093747ff))
+
+- Update dev dependencies
+  ([`5949e95`](https://github.com/pivoshenko/uv-upsync/commit/5949e957d7af4e1cf41ee6e44f1c1038914d71b6))
+
+### Refactoring
+
+- Run ty
+  ([`9e7702b`](https://github.com/pivoshenko/uv-upsync/commit/9e7702b099f5ee11aa0838ca49b66ad91d4c850f))
+
+
 ## v2.2.0 (2026-03-08)
 
 ### Bug Fixes
