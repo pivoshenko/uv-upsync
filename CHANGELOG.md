@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.3.1 (2026-03-29)
+
+### Build System
+
+- Update dependencies
+  ([`b7b8061`](https://github.com/pivoshenko/uv-upsync/commit/b7b806147b11da89976b39fc13fd239756c6542d))
+
+### Documentation
+
+- Update badge
+  ([`15b9bf9`](https://github.com/pivoshenko/uv-upsync/commit/15b9bf9bc5b83504cb7a2d685af216dadf936f48))
+
+
 ## v2.3.0 (2026-03-29)
 
 ### Build System
