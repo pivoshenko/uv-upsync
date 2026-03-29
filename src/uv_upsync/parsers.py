@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 
 import tomlkit
 
@@ -25,14 +27,15 @@ logger = logging.Logger()
 def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:
     dependencies_groups = {}
 
-    project_dependencies = list(pyproject["project"].get("dependencies", []))  # type: ignore[union-attr]
+    project_section = cast("dict[str, Any]", pyproject["project"])
+    project_dependencies = list(project_section.get("dependencies", []))
     match project_dependencies:
         case []:
             pass
         case _:
             dependencies_groups.update({"project": project_dependencies})
 
-    optional_dependencies = dict(pyproject["project"].get("optional-dependencies", {}))  # type: ignore[union-attr]
+    optional_dependencies = dict(project_section.get("optional-dependencies", {}))
     match optional_dependencies:
         case _ if optional_dependencies:
             dependencies_groups.update({"optional-dependencies": optional_dependencies})
