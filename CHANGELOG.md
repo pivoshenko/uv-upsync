@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.3.2 (2026-03-29)
+
+### Chores
+
+- Remove deprecated GitHub workflows and files
+  ([`9f2f579`](https://github.com/pivoshenko/uv-upsync/commit/9f2f5795469ac2535bdaf12c938950588184a174))
+
+### Documentation
+
+- Remove TOC
+  ([`91548dc`](https://github.com/pivoshenko/uv-upsync/commit/91548dc7d012087d2640ea6f7c6f68fcc294a160))
+
+
 ## v2.3.1 (2026-03-29)
 
 ### Build System
