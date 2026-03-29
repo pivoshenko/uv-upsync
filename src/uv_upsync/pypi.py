@@ -40,7 +40,7 @@ class _CompatHTTPStatusError(HTTPError):
 # `httpx.HTTPStatusError(...)` will get our compatibility wrapper which
 # accepts multiple common calling styles without delegating to the
 # original implementation (avoids TypeError across httpx versions)
-httpx.HTTPStatusError = _CompatHTTPStatusError  # type: ignore[invalid-assignment]
+setattr(httpx, "HTTPStatusError", _CompatHTTPStatusError)  # noqa: B010
 
 
 logger = logging.Logger()
