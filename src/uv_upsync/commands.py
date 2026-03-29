@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import click
+
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class HelpFormatter(click.HelpFormatter):
@@ -17,9 +23,9 @@ class HelpFormatter(click.HelpFormatter):
     def write_heading(self, heading: str) -> None:
         self.write(click.style(f"{heading}:\n", fg="green", bold=True))
 
-    def write_dl(  # type: ignore[override]
+    def write_dl(
         self,
-        rows: list[tuple[str, str]],
+        rows: Sequence[tuple[str, str]],
         col_max: int = 30,
         col_spacing: int = 2,
     ) -> None:

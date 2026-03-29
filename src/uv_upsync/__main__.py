@@ -5,6 +5,9 @@ from __future__ import annotations
 import copy
 import pathlib
 
+from typing import Any
+from typing import cast
+
 import click
 import tomlkit
 
@@ -80,13 +83,15 @@ def main(  # noqa: C901, PLR0912, PLR0915
                     dependency_group,
                     exclude,
                 )
-                dependency_specifiers = pyproject["project"]["dependencies"]  # type: ignore[index]
-                for index in range(len(dependency_specifiers)):  # type: ignore[arg-type]
-                    dependency_specifiers[index] = updated_dependency_specifiers[index]  # type: ignore[index]
+                project_section = cast("dict[str, Any]", pyproject["project"])
+                dependency_specifiers = cast("list[Any]", project_section["dependencies"])
+                for index in range(len(dependency_specifiers)):
+                    dependency_specifiers[index] = updated_dependency_specifiers[index]
 
             case "optional-dependencies":
-                dependency_groups = pyproject["project"][group_name]  # type: ignore[index]
-                for subgroup_name, dependency_specifiers in dependency_groups.items():  # type: ignore[union-attr]
+                project_section = cast("dict[str, Any]", pyproject["project"])
+                dependency_groups = cast("dict[str, Any]", project_section[group_name])
+                for subgroup_name, dependency_specifiers in dependency_groups.items():
                     match group:
                         case () if not group:
                             pass
@@ -104,8 +109,8 @@ def main(  # noqa: C901, PLR0912, PLR0915
                         dependency_specifiers[index] = updated_dependency_specifiers[index]
 
             case "dependency-groups":
-                dependency_groups = pyproject[group_name]
-                for subgroup_name, dependency_specifiers in dependency_groups.items():  # type: ignore[union-attr]
+                dependency_groups = cast("dict[str, Any]", pyproject[group_name])
+                for subgroup_name, dependency_specifiers in dependency_groups.items():
                     match group:
                         case () if not group:
                             pass
