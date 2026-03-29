@@ -1188,7 +1188,7 @@ wheels = [
 
 [[package]]
 name = "uv-upsync"
-version = "2.2.0"
+version = "2.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -1224,31 +1224,31 @@ tests = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.1.8" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "tomlkit", specifier = ">=0.13.3" },
+    { name = "click", specifier = "~=8.1.8" },
+    { name = "httpx", specifier = "~=0.28.1" },
+    { name = "tomlkit", specifier = "~=0.13.3" },
 ]
 
 [package.metadata.requires-dev]
 ci = [{ name = "python-semantic-release", specifier = "~=10.5.3" }]
-dev = [{ name = "poethepoet", specifier = ">=0.42.1" }]
+dev = [{ name = "poethepoet", specifier = "~=0.42.1" }]
 formatters = [
-    { name = "pyupgrade", specifier = ">=3.21.2" },
-    { name = "ruff", specifier = ">=0.15.8" },
+    { name = "pyupgrade", specifier = "~=3.21.2" },
+    { name = "ruff", specifier = "~=0.15.8" },
 ]
 linters = [
-    { name = "commitizen", specifier = ">=4.13.9" },
-    { name = "ruff", specifier = ">=0.15.8" },
-    { name = "ty", specifier = ">=0.0.26" },
+    { name = "commitizen", specifier = "~=4.13.9" },
+    { name = "ruff", specifier = "~=0.15.8" },
+    { name = "ty", specifier = "~=0.0.26" },
 ]
 tests = [
-    { name = "coverage", extras = ["toml"], specifier = ">=7.13.5" },
+    { name = "coverage", extras = ["toml"], specifier = "~=7.13.5" },
     { name = "pytest", specifier = "==7.4.4" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "pytest-lazy-fixture", specifier = ">=0.6.3" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
-    { name = "pytest-sugar", specifier = ">=1.1.1" },
-    { name = "sh", specifier = ">=2.2.2" },
+    { name = "pytest-cov", specifier = "~=7.1.0" },
+    { name = "pytest-lazy-fixture", specifier = "~=0.6.3" },
+    { name = "pytest-mock", specifier = "~=3.15.1" },
+    { name = "pytest-sugar", specifier = "~=1.1.1" },
+    { name = "sh", specifier = "~=2.2.2" },
 ]
 
 [[package]]

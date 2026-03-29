@@ -10,7 +10,7 @@ from uv_upsync import exceptions
 def lock() -> None:
     try:
         subprocess.run(
-            ("uv", "lock"),
+            ("uv", "lock"),  # noqa: S607
             check=True,
             capture_output=True,
             text=True,
