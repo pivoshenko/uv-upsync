@@ -84,6 +84,9 @@ omit = ["*/__init__.py", "*/__main__.py"]
 addopts = ["--basetemp=tests/fixtures", "--color=yes", "--cov-report=html", "--cov-report=xml", "--cov=src"]
 testpaths = ["tests"]
 
+[tool.ty.environment]
+python-version = "3.13"
+
 [tool.ruff]
 fix = true
 line-length = 100
