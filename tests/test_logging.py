@@ -19,21 +19,12 @@ def test_logger_is_singleton() -> None:
     assert logger1 is logger2
 
 
-def test_singleton_meta_instances() -> None:
-    class TestClass1(metaclass=logging.SingletonMeta):
-        pass
+def test_logger_singleton_reset() -> None:
+    logger1 = logging.Logger()
+    logging.Logger._instance = None  # noqa: SLF001
+    logger2 = logging.Logger()
 
-    class TestClass2(metaclass=logging.SingletonMeta):
-        pass
-
-    instance1a = TestClass1()
-    instance1b = TestClass1()
-    instance2a = TestClass2()
-    instance2b = TestClass2()
-
-    assert instance1a is instance1b
-    assert instance2a is instance2b
-    assert instance1a is not instance2a
+    assert logger1 is not logger2
 
 
 @pytest.mark.parametrize(

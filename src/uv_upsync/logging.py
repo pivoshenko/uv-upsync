@@ -7,16 +7,14 @@ import typing
 import click
 
 
-class SingletonMeta(type):
-    _instances: typing.ClassVar[dict[type, object]] = {}
+class Logger:
+    _instance: typing.ClassVar[Logger | None] = None
 
-    def __call__(cls, *args: object, **kwargs: object) -> object:
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
+    def __new__(cls) -> typing.Self:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
-
-class Logger(metaclass=SingletonMeta):
     def info(self, message: str) -> None:
         self._log(click.style(message, fg="green"))
 
