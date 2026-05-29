@@ -23,6 +23,7 @@ from uv_upsync import exceptions
 from uv_upsync import logging
 from uv_upsync import parsers
 from uv_upsync import pypi
+from uv_upsync import report
 from uv_upsync import uv
 
 
@@ -151,6 +152,13 @@ def _resolve_filepath(
     default=False,
     help="Allow upgrading to pre-release versions",
 )
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json", "markdown"]),
+    default="text",
+    help="Output format for the summary of upgrades",
+)
 @click.option("-q", "--quiet", is_flag=True, default=False, help="Use quiet output")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Use verbose output")
 @click.option(
@@ -159,7 +167,7 @@ def _resolve_filepath(
     default="auto",
     help="Control the use of color in output",
 )
-def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
+def cli(  # noqa: C901, PLR0913, PLR0915
     project: pathlib.Path | None,
     directory: pathlib.Path | None,
     filepath: pathlib.Path | None,
@@ -168,6 +176,7 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     group: tuple[str, ...],
     index_url: str | None,
     max_bump: str | None,
+    output_format: str,
     *,
     all_groups: bool,
     offline: bool,
@@ -185,7 +194,8 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     use_color = COLOR_CHOICES[color]
     if use_color is None and os.environ.get("NO_COLOR"):
         use_color = False
-    logger.configure(quiet=quiet, verbose=verbose, color=use_color)
+    # Machine-readable formats keep stdout clean by suppressing the status lines.
+    logger.configure(quiet=quiet or output_format != "text", verbose=verbose, color=use_color)
 
     if directory is not None:
         os.chdir(directory)
@@ -247,23 +257,24 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
 
     if not updates:
         logger.status("Audited", f"{len(package_names)} dependencies, all up to date")
+        _emit_structured(output_format, [], [])
         if check:
             raise click.exceptions.Exit(0)
         return
 
     if check:
-        _report_updates(updates, filepath)
+        _report_updates(output_format, updates, [], filepath)
         logger.warning(f"{len(updates)} {_pluralize(len(updates))} can be upgraded")
         raise click.exceptions.Exit(1)
 
     if dry_run:
-        _report_updates(updates, filepath)
+        _report_updates(output_format, updates, [], filepath)
         logger.warning("Dry run enabled, no changes were written to pyproject.toml")
         return
 
     if no_lock:
         _write(pyproject, group, updates, filepath, all_groups=all_groups)
-        _report_updates(updates, filepath)
+        _report_updates(output_format, updates, [], filepath)
         return
 
     applied = _apply_with_lock(
@@ -276,22 +287,40 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
         offline=offline,
         strict=strict,
     )
-    _report_updates(applied, filepath)
-    for update in updates:
-        if update not in applied:
-            logger.warning(
-                f"Held back {update.name} v{update.old_version} -> v{update.new_version} "
-                f"(could not be resolved)",
-            )
+    held_back = [update for update in updates if update not in applied]
+    _report_updates(output_format, applied, held_back, filepath)
     if applied:
         logger.status("Locked", "dependencies")
 
 
-def _report_updates(updates: list[parsers.Update], filepath: pathlib.Path) -> None:
-    for update in updates:
+def _emit_structured(
+    output_format: str,
+    updated: list[parsers.Update],
+    held_back: list[parsers.Update],
+) -> None:
+    if output_format != "text":
+        click.echo(report.render(output_format, updated, held_back), color=False)
+
+
+def _report_updates(
+    output_format: str,
+    updated: list[parsers.Update],
+    held_back: list[parsers.Update],
+    filepath: pathlib.Path,
+) -> None:
+    if output_format != "text":
+        _emit_structured(output_format, updated, held_back)
+        return
+
+    for update in updated:
         logger.update(update.name, update.old_version, update.new_version)
-    if updates:
-        logger.status("Updated", f"{len(updates)} {_pluralize(len(updates))} in {filepath.name}")
+    if updated:
+        logger.status("Updated", f"{len(updated)} {_pluralize(len(updated))} in {filepath.name}")
+    for update in held_back:
+        logger.warning(
+            f"Held back {update.name} v{update.old_version} -> v{update.new_version} "
+            f"(could not be resolved)",
+        )
 
 
 def _write(

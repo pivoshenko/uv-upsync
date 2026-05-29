@@ -67,6 +67,7 @@ preserving your formatting, comments, operators, extras and environment markers.
 - **Configurable** — persist defaults in a `[tool.uv-upsync]` table, overridable per run
 - **Resilient** — by default an upgrade that does not resolve is held back individually instead of failing the whole run (`--strict` to opt out)
 - **Safe** — `--dry-run` to preview and `--check` for CI
+- **Scriptable** — `--format json` for tooling and `--format markdown` for pull request bodies
 - **Integrated** — ships a [pre-commit] hook and a GitHub Action
 
 ## Installation
@@ -126,6 +127,7 @@ Audited 12 dependencies, all up to date
 | `--no-lock` | Write the upgrades without running `uv lock` |
 | `-q`, `--quiet` | Use quiet output |
 | `-v`, `--verbose` | Use verbose output (shows skipped dependencies) |
+| `--format <text\|json\|markdown>` | Output format for the upgrade summary |
 | `--color <auto\|always\|never>` | Control the use of color in output |
 | `-V`, `--version` | Show the version and exit |
 
@@ -247,24 +249,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pivoshenko/uv-upsync@v2.3.2
+      - id: upsync
+        uses: pivoshenko/uv-upsync@v2.3.2
         with:
-          args: --all-groups
+          args: --all-groups --format markdown
       - uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "build: upgrade dependencies"
           title: "build: upgrade dependencies"
+          body: ${{ steps.upsync.outputs.summary }}
           branch: build/uv-upsync
 ```
 
-To gate pull requests instead, run the action with `args: --check` and drop the
-pull request step.
+With `--format markdown` the action's `summary` output is a ready-made pull
+request body (`⬆️ click 8.1.8 → 8.2.1 …`). To gate pull requests instead, run
+the action with `args: --check` and drop the pull request step.
 
 | Input | Description | Default |
 | --- | --- | --- |
 | `args` | Additional arguments passed to `uv-upsync` | `""` |
 | `version` | Version of `uv-upsync` to run | latest |
 | `working-directory` | Directory to run in | `.` |
+
+| Output | Description |
+| --- | --- |
+| `summary` | The upgrade summary printed by `uv-upsync` |
 
 [PEP 691]: https://peps.python.org/pep-0691
 [PEP 735]: https://peps.python.org/pep-0735

@@ -19,6 +19,11 @@ inputs:
     required: false
     default: "."
 
+outputs:
+  summary:
+    description: The upgrade summary printed by uv-upsync (pass `--format markdown` for a PR body)
+    value: ${{ steps.upsync.outputs.summary }}
+
 runs:
   using: composite
   steps:
@@ -26,8 +31,16 @@ runs:
       uses: astral-sh/setup-uv@v5
 
     - name: Run uv-upsync
+      id: upsync
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: >-
-        uvx ${{ inputs.version != '' && format('uv-upsync@{0}', inputs.version) || 'uv-upsync' }}
-        ${{ inputs.args }}
+      run: |
+        summary="$(uvx ${{ inputs.version != '' && format('uv-upsync@{0}', inputs.version) || 'uv-upsync' }} ${{ inputs.args }})"
+        status=$?
+        printf '%s\n' "$summary"
+        {
+          printf 'summary<<UPSYNC_EOF\n'
+          printf '%s\n' "$summary"
+          printf 'UPSYNC_EOF\n'
+        } >> "$GITHUB_OUTPUT"
+        exit "$status"
