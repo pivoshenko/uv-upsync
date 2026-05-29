@@ -138,6 +138,19 @@ def _resolve_filepath(
     default=False,
     help="Write the upgrades without running uv lock",
 )
+@click.option(
+    "--max-bump",
+    "max_bump",
+    type=click.Choice(["major", "minor", "patch"]),
+    default=None,
+    help="Limit upgrades to at most this release level (holds back larger bumps)",
+)
+@click.option(
+    "--prerelease",
+    is_flag=True,
+    default=False,
+    help="Allow upgrading to pre-release versions",
+)
 @click.option("-q", "--quiet", is_flag=True, default=False, help="Use quiet output")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Use verbose output")
 @click.option(
@@ -154,6 +167,7 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     exclude: tuple[str, ...],
     group: tuple[str, ...],
     index_url: str | None,
+    max_bump: str | None,
     *,
     all_groups: bool,
     offline: bool,
@@ -162,6 +176,7 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     check: bool,
     strict: bool,
     no_lock: bool,
+    prerelease: bool,
     quiet: bool,
     verbose: bool,
     color: str,
@@ -195,6 +210,8 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     upgrade_package = upgrade_package or settings.upgrade_package
     all_groups = all_groups or settings.all_groups
     index_url = index_url or settings.index_url
+    max_bump = max_bump or settings.max_bump
+    prerelease = prerelease or settings.prerelease
 
     only = frozenset(canonicalize_name(name) for name in upgrade_package)
     dependency_groups = list(
@@ -218,7 +235,14 @@ def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
         versions = client.fetch_many(package_names)
     elapsed_ms = (time.perf_counter() - started_at) * 1000
 
-    updates = parsers.plan_updates(dependency_groups, versions, exclude, only)
+    updates = parsers.plan_updates(
+        dependency_groups,
+        versions,
+        exclude,
+        only,
+        allow_prerelease=prerelease,
+        max_bump=max_bump,
+    )
     logger.status("Resolved", f"{len(package_names)} packages in {elapsed_ms:.0f}ms")
 
     if not updates:

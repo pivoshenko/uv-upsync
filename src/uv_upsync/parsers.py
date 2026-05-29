@@ -17,6 +17,7 @@ from typing import cast
 
 from packaging.requirements import InvalidRequirement
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 from tomlkit import items
@@ -39,6 +40,8 @@ logger = logging.Logger()
 # bound (`<`, `<=`) and exclusion (`!=`) constraints are intentionally left
 # untouched, mirroring uv's conservative `--upgrade` behavior.
 UPGRADABLE_OPERATORS = frozenset({">=", ">", "~="})
+PINNED_OPERATORS = frozenset({"==", "==="})
+BUMP_LEVELS = ("major", "minor", "patch")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -99,17 +102,68 @@ def parse_requirement(specifier: str) -> Requirement | None:
         return None
 
 
-def upgradable_specifier(requirement: Requirement) -> Specifier | None:
-    """Return the single specifier whose lower bound can be raised, else `None`."""
+def upgradable_specifier(requirement: Requirement) -> tuple[Specifier, SpecifierSet] | None:
+    """Return the raisable lower-bound clause and the residual constraints, or `None`.
+
+    Compound specifiers such as `>=1.0,<2.0` are supported: the single lower-bound
+    clause is the one we raise, while the remaining clauses (caps, exclusions) are
+    returned as a residual `SpecifierSet` that any new version must still satisfy.
+    Pinned requirements (`==`, `===`) are never touched.
+    """
     specifiers = list(requirement.specifier)
-    if len(specifiers) != 1:
+    if any(specifier.operator in PINNED_OPERATORS for specifier in specifiers):
         return None
 
-    specifier = specifiers[0]
-    if specifier.operator not in UPGRADABLE_OPERATORS:
+    lower_indexes = [
+        index
+        for index, specifier in enumerate(specifiers)
+        if specifier.operator in UPGRADABLE_OPERATORS
+    ]
+    if len(lower_indexes) != 1:
         return None
 
-    return specifier
+    lower_index = lower_indexes[0]
+    residual = SpecifierSet(
+        ",".join(
+            str(specifier) for index, specifier in enumerate(specifiers) if index != lower_index
+        ),
+    )
+    return specifiers[lower_index], residual
+
+
+def select_new_version(
+    versions: Sequence[Version],
+    residual: SpecifierSet,
+    old_version: str,
+    *,
+    allow_prerelease: bool = False,
+    max_bump: str | None = None,
+) -> str | None:
+    """Pick the highest version greater than `old_version` allowed by the policies."""
+    old = Version(old_version)
+    best: Version | None = None
+    for version in versions:
+        if version <= old:
+            continue
+        if not allow_prerelease and (version.is_prerelease or version.is_devrelease):
+            continue
+        if not residual.contains(version, prereleases=allow_prerelease):
+            continue
+        if not _within_bump(old, version, max_bump):
+            continue
+        if best is None or version > best:
+            best = version
+    return str(best) if best is not None else None
+
+
+def _within_bump(old: Version, new: Version, max_bump: str | None) -> bool:
+    if max_bump is None or max_bump == "major":
+        return True
+    old_release = (*old.release, 0, 0)[:3]
+    new_release = (*new.release, 0, 0)[:3]
+    if max_bump == "minor":
+        return new_release[0] == old_release[0]
+    return new_release[:2] == old_release[:2]
 
 
 def collect_package_names(
@@ -126,11 +180,14 @@ def collect_package_names(
     return names
 
 
-def plan_updates(
+def plan_updates(  # noqa: PLR0913
     dependency_groups: Sequence[tuple[str, items.Array]],
-    versions: dict[str, str | None],
+    versions: dict[str, list[Version]],
     exclude: tuple[str, ...],
     only: frozenset[str] = frozenset(),
+    *,
+    allow_prerelease: bool = False,
+    max_bump: str | None = None,
 ) -> list[Update]:
     """Compute the version bumps for the given groups without mutating anything."""
     updates: list[Update] = []
@@ -145,11 +202,19 @@ def plan_updates(
                 continue
 
             text = cast("str", specifier)
-            new_version = versions.get(canonicalize_name(requirement.name))
-            old_version = target.version
+            lower, residual = target
+            old_version = lower.version
+            candidates = versions.get(canonicalize_name(requirement.name), [])
+            new_version = select_new_version(
+                candidates,
+                residual,
+                old_version,
+                allow_prerelease=allow_prerelease,
+                max_bump=max_bump,
+            )
 
-            if new_version is None or Version(new_version) <= Version(old_version):
-                logger.skip(f"Skipping {text} (up to date)")
+            if new_version is None:
+                _log_skip(text, candidates, residual, old_version, max_bump=max_bump)
                 continue
 
             updates.append(
@@ -159,11 +224,27 @@ def plan_updates(
                     name=requirement.name,
                     old_version=old_version,
                     new_version=new_version,
-                    new_text=_replace_version(text, target.operator, old_version, new_version),
+                    new_text=_replace_version(text, lower.operator, old_version, new_version),
                 ),
             )
 
     return updates
+
+
+def _log_skip(
+    text: str,
+    candidates: Sequence[Version],
+    residual: SpecifierSet,
+    old_version: str,
+    *,
+    max_bump: str | None,
+) -> None:
+    if max_bump is not None:
+        held = select_new_version(candidates, residual, old_version, max_bump=None)
+        if held is not None:
+            logger.skip(f"Skipping {text} (v{held} exceeds --max-bump {max_bump})")
+            return
+    logger.skip(f"Skipping {text} (up to date)")
 
 
 def apply_updates(
