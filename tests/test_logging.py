@@ -120,6 +120,28 @@ def test_warning_and_error_go_to_stderr(
     assert mock_echo.call_args[1]["err"] is True
 
 
+def test_error_renders_caused_by_chain(mocker: MockerFixture) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    logger.error("Failed to lock", cause=ValueError("first line\nsecond line"))
+
+    messages = [call.args[0] for call in mock_echo.call_args_list]
+    assert any("error:" in message and "Failed to lock" in message for message in messages)
+    assert any("Caused by: first line" in message for message in messages)
+    assert any("second line" in message for message in messages)
+    assert all(call.kwargs["err"] is True for call in mock_echo.call_args_list)
+
+
+def test_error_without_cause_emits_single_line(mocker: MockerFixture) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    logger.error("boom")
+
+    mock_echo.assert_called_once()
+
+
 def test_echo_passes_configured_color(mocker: MockerFixture) -> None:
     mock_echo = mocker.patch("click.echo")
 

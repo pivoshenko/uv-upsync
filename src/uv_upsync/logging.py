@@ -60,8 +60,14 @@ class Logger:
     def warning(self, message: str) -> None:
         self._echo(f"{click.style('warning:', fg='yellow', bold=True)} {message}", err=True)
 
-    def error(self, message: str) -> None:
+    def error(self, message: str, *, cause: object | None = None) -> None:
         self._echo(f"{click.style('error:', fg='red', bold=True)} {message}", err=True)
+        if cause is None:
+            return
+        first, *rest = str(cause).splitlines() or [""]
+        self._echo(click.style(f"  Caused by: {first}", dim=True), err=True)
+        for line in rest:
+            self._echo(click.style(f"             {line}", dim=True), err=True)
 
     def _echo(self, message: str, *, err: bool = False) -> None:
         click.echo(message, err=err, color=self.color)

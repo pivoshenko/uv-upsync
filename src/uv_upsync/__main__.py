@@ -14,9 +14,11 @@ import click
 import tomlkit
 
 from packaging.utils import canonicalize_name
+from tomlkit.exceptions import TOMLKitError
 
 from uv_upsync import __version__
 from uv_upsync import commands
+from uv_upsync import exceptions
 from uv_upsync import logging
 from uv_upsync import parsers
 from uv_upsync import pypi
@@ -26,6 +28,7 @@ from uv_upsync import uv
 logger = logging.Logger()
 
 COLOR_CHOICES = {"auto": None, "always": True, "never": False}
+ERROR_EXIT_CODE = 2
 
 
 def _resolve_filepath(
@@ -129,7 +132,7 @@ def _resolve_filepath(
     default="auto",
     help="Control the use of color in output",
 )
-def main(  # noqa: C901, PLR0913
+def cli(  # noqa: C901, PLR0913
     project: pathlib.Path | None,
     directory: pathlib.Path | None,
     filepath: pathlib.Path | None,
@@ -159,10 +162,14 @@ def main(  # noqa: C901, PLR0913
     filepath = _resolve_filepath(filepath, project)
     if not filepath.is_file():
         logger.error(f"No pyproject.toml found at {filepath}")
-        raise click.exceptions.Exit(2)
+        raise click.exceptions.Exit(ERROR_EXIT_CODE)
 
-    with filepath.open() as toml_file:
-        pyproject = tomlkit.load(toml_file)
+    try:
+        with filepath.open() as toml_file:
+            pyproject = tomlkit.load(toml_file)
+    except (OSError, TOMLKitError) as exception:
+        logger.error(f"Failed to read {filepath}", cause=exception)
+        raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
     backup = copy.deepcopy(pyproject)
 
     only = frozenset(canonicalize_name(name) for name in upgrade_package)
@@ -218,14 +225,37 @@ def main(  # noqa: C901, PLR0913
     try:
         uv.lock(offline=offline, cwd=filepath.parent)
         logger.status("Locked", "dependencies")
-    except Exception as exception:  # noqa: BLE001
-        logger.error(f"Failed to lock the dependencies, rolling back changes\n{exception}")  # noqa: TRY400
+    except exceptions.UVCommandError as exception:
+        logger.error("Failed to lock the dependencies, rolling back changes", cause=exception)
         with filepath.open("w") as toml_file:
             tomlkit.dump(backup, toml_file)
+        raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
 
 
 def _pluralize(count: int) -> str:
     return "dependency" if count == 1 else "dependencies"
+
+
+def main() -> None:
+    """Entry point that renders failures as uv-style errors instead of tracebacks."""
+    try:
+        exit_code = cli.main(standalone_mode=False)
+    except click.exceptions.Abort as exception:
+        logger.error("operation cancelled")
+        raise SystemExit(130) from exception
+    except click.ClickException as exception:
+        logger.error(exception.format_message())
+        raise SystemExit(exception.exit_code) from exception
+    except exceptions.BaseError as exception:
+        logger.error(str(exception))
+        raise SystemExit(ERROR_EXIT_CODE) from exception
+    except Exception as exception:
+        logger.error(f"unexpected error: {exception}")
+        if logger.verbose:
+            raise
+        raise SystemExit(ERROR_EXIT_CODE) from exception
+    else:
+        raise SystemExit(exit_code or 0)
 
 
 if __name__ == "__main__":
