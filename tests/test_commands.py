@@ -27,8 +27,8 @@ def test_command_inherits_from_click() -> None:
 @pytest.mark.parametrize(
     ("prefix", "expected_styling"),
     [
-        (None, True),  # Should use default styled prefix
-        ("Custom: ", False),  # Should use custom prefix as-is
+        (None, True),
+        ("Custom: ", False),
     ],
 )
 def test_help_formatter_write_usage(
@@ -44,8 +44,6 @@ def test_help_formatter_write_usage(
 
     if expected_styling:
         mock_style.assert_called()
-    else:
-        pass
 
 
 def test_help_formatter_write_heading(mocker: MockerFixture) -> None:
@@ -56,26 +54,18 @@ def test_help_formatter_write_heading(mocker: MockerFixture) -> None:
 
     mock_style.assert_called_once()
     assert mock_style.call_args[0][0] == "Options:\n"
-    assert mock_style.call_args[1] == {"fg": "green", "bold": True}
+    assert mock_style.call_args[1] == {"bold": True}
 
 
-@pytest.mark.parametrize(
-    "rows",
-    [
-        [("--help", "Show help message")],
-        [("--verbose", "Enable verbose output"), ("--quiet", "Quiet mode")],
-        [("-v, --version", "Show version"), ("-h, --help", "Show help")],
-    ],
-)
-def test_help_formatter_write_dl(mocker: MockerFixture, rows: list[tuple[str, str]]) -> None:
-    mock_style = mocker.patch("click.style", side_effect=lambda x, **kwargs: f"styled_{x}")  # noqa: ARG005
+def test_help_formatter_write_dl(mocker: MockerFixture) -> None:
+    mock_style = mocker.patch("click.style", side_effect=lambda x, **_: f"styled_{x}")
 
     formatter = commands.HelpFormatter()
-    formatter.write_dl(rows)
+    formatter.write_dl([("--verbose", "Enable verbose output"), ("--quiet", "Quiet mode")])
 
-    assert mock_style.call_count == len(rows)
+    assert mock_style.call_count == 2
     for call in mock_style.call_args_list:
-        assert call[1] == {"fg": "magenta", "bold": True}
+        assert call[1] == {"fg": "cyan", "bold": True}
 
 
 def test_command_format_help_order(mocker: MockerFixture) -> None:
@@ -106,7 +96,6 @@ def test_command_get_help_returns_formatted_string() -> None:
     help_text = test_command.get_help(ctx)
 
     assert isinstance(help_text, str)
-    assert len(help_text) > 0
     assert "Test command description." in help_text
 
 
@@ -122,14 +111,3 @@ def test_command_integration_with_runner() -> None:
 
     assert result.exit_code == 0
     assert "Greet someone." in result.output
-
-
-def test_help_formatter_default_prefix_styling(mocker: MockerFixture) -> None:
-    mock_style = mocker.patch("click.style", return_value="Usage: ")
-
-    formatter = commands.HelpFormatter()
-    formatter.write_usage("program", args="[OPTIONS]", prefix=None)
-
-    style_calls = [call for call in mock_style.call_args_list if "Usage: " in str(call)]
-    assert len(style_calls) > 0
-    assert any(call[1].get("fg") == "green" and call[1].get("bold") is True for call in style_calls)

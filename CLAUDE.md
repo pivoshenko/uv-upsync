@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-uv-upsync is a CLI tool for automated dependency updates and version bumping in `pyproject.toml` files. It queries PyPI for latest versions and updates version specifiers while preserving TOML formatting, comments, and operators. Built with Click, httpx, and tomlkit.
+uv-upsync is a CLI tool for automated dependency updates and version bumping in `pyproject.toml` files. Think of it as `uv lock --upgrade` for the human-authored version specifiers: it raises the lower bounds in `pyproject.toml` to the latest published versions, then re-locks with `uv`. It is designed to feel native to the uv ecosystem — uv-style flags, output, and a `uv lock` round-trip with rollback on failure. Built with Click, httpx, tomlkit, and packaging.
 
 ## Commands
 
@@ -28,13 +28,13 @@ Entry point: `uv_upsync.__main__:main` (Click CLI).
 
 Source in `src/uv_upsync/` with clear separation:
 
-- **`__main__.py`** — CLI definition and main orchestration: load pyproject.toml, iterate dependency groups, update specifiers, write back, run `uv lock`, rollback on failure
-- **`parsers.py`** — TOML parsing, dependency specifier extraction, version update logic. Handles three group types: `project.dependencies`, `project.optional-dependencies`, `dependency-groups` (PEP 735). Skips `==`, `<=`, `<` operators (conservative). Preserves environment markers and inline tables
-- **`pypi.py`** — httpx client to fetch latest versions from `https://pypi.org/pypi/{package}/json`. Strips extras from package names (e.g., `coverage[toml]` → `coverage`)
-- **`uv.py`** — Subprocess wrapper for `uv lock`
-- **`commands.py`** — Custom Click command/formatter classes for rich CLI output
-- **`logging.py`** — Singleton logger using Click's echo
-- **`exceptions.py`** — Custom exception hierarchy
+- **`__main__.py`** — uv-style Click CLI and orchestration. Resolves the target pyproject, collects upgradable package names across the selected groups, fetches latest versions concurrently, applies updates, writes back, runs `uv lock` (in the project directory) and rolls back on failure. Supports `--check` (CI gate) and `--dry-run`
+- **`parsers.py`** — TOML iteration and version-bumping logic. Parses specifiers with `packaging` (`Requirement`/`Specifier`), not regex. Handles three group types: `project.dependencies`, `project.optional-dependencies`, `dependency-groups` (PEP 735). Only raises lower bounds (`>=`, `>`, `~=`); pinned/capped/excluded operators are skipped. `_replace_version` rewrites only the version token, preserving formatting, extras and markers. Inline tables (e.g. `include-group`) are ignored
+- **`pypi.py`** — `PyPIClient` querying the PEP 691 simple JSON API (`Accept: application/vnd.pypi.simple.v1+json`). Index-aware: `index_url_from_pyproject` reads `[[tool.uv.index]]` / `tool.uv.index-url`. Fetches concurrently (thread pool), caches in memory, supports `--offline`/`--no-cache`. Picks the highest stable version via `packaging.version`
+- **`uv.py`** — Subprocess wrapper for `uv lock` (accepts `cwd` and `--offline`)
+- **`commands.py`** — Custom Click command/formatter classes; help mirrors uv's clap layout (bold headers, cyan flags)
+- **`logging.py`** — Singleton logger with uv-style output: `status` (green verb), `update` (`Updated <name> v<old> -> v<new>`), `warning:`/`error:` prefixes to stderr, verbose-only `skip`. Honors `--quiet`/`--verbose`/`--color`
+- **`exceptions.py`** — `BaseError` and `UVCommandError`
 
 ## Code Conventions
 
@@ -43,9 +43,9 @@ Source in `src/uv_upsync/` with clear separation:
 - All ruff lint rules enabled (`select = ["ALL"]`), specific ignores in pyproject.toml
 - Line length: 100
 - Double quotes, single-line imports, imports sorted by length
-- Uses Python 3.10+ `match` statements extensively
 - Type annotations throughout; type checker is `ty` (not mypy)
-- Coverage target: 95%
+- Coverage target: 95% (`__main__.py` and `__init__.py` are omitted from coverage)
+- Run the test suite with all dependency groups installed (e.g. `uv run --all-groups pytest`) so `pytest-cov` is available
 
 ## Commit Convention
 

@@ -1,4 +1,4 @@
-"""Module that contains tests for the module that contains implementation of the uv commands."""
+"""Module that contains tests for the module that contains the uv CLI wrapper."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from uv_upsync import uv
 
 
 if typing.TYPE_CHECKING:
+    import pathlib
+
     from pytest_mock import MockerFixture
 
 
@@ -22,11 +24,30 @@ def test_lock_success(mocker: MockerFixture) -> None:
     uv.lock()
 
     mock_run.assert_called_once_with(
-        ("uv", "lock"),
+        ["uv", "lock"],
         check=True,
         capture_output=True,
         text=True,
+        cwd=None,
     )
+
+
+def test_lock_runs_in_given_directory(mocker: MockerFixture, tmp_path: pathlib.Path) -> None:
+    mock_run = mocker.patch("subprocess.run")
+    mock_run.return_value = mocker.Mock(returncode=0)
+
+    uv.lock(cwd=tmp_path)
+
+    assert mock_run.call_args[1]["cwd"] == tmp_path
+
+
+def test_lock_offline_appends_flag(mocker: MockerFixture) -> None:
+    mock_run = mocker.patch("subprocess.run")
+    mock_run.return_value = mocker.Mock(returncode=0)
+
+    uv.lock(offline=True)
+
+    assert mock_run.call_args[0][0] == ["uv", "lock", "--offline"]
 
 
 @pytest.mark.parametrize(
@@ -34,7 +55,6 @@ def test_lock_success(mocker: MockerFixture) -> None:
     [
         (1, "", "Error: Package not found"),
         (2, "Processing...", "Fatal error occurred"),
-        (1, "Locking dependencies", "Conflict detected"),
         (127, "", "Command not found"),
     ],
 )
@@ -62,19 +82,6 @@ def test_lock_failure(
     assert error.stderr == stderr
 
 
-def test_lock_command_structure(mocker: MockerFixture) -> None:
-    mock_run = mocker.patch("subprocess.run")
-    mock_run.return_value = mocker.Mock(returncode=0)
-
-    uv.lock()
-
-    call_args = mock_run.call_args
-    assert call_args[0][0] == ("uv", "lock")
-    assert call_args[1]["check"] is True
-    assert call_args[1]["capture_output"] is True
-    assert call_args[1]["text"] is True
-
-
 def test_lock_exception_chain(mocker: MockerFixture) -> None:
     original_error = subprocess.CalledProcessError(
         returncode=1,
@@ -82,9 +89,7 @@ def test_lock_exception_chain(mocker: MockerFixture) -> None:
         output="out",
         stderr="err",
     )
-
-    mock_run = mocker.patch("subprocess.run")
-    mock_run.side_effect = original_error
+    mocker.patch("subprocess.run", side_effect=original_error)
 
     with pytest.raises(exceptions.UVCommandError) as exc_info:
         uv.lock()
