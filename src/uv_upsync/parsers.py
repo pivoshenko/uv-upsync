@@ -8,6 +8,7 @@ extras and environment markers are preserved verbatim.
 
 from __future__ import annotations
 
+import re
 import copy
 import dataclasses
 
@@ -54,6 +55,8 @@ class Update:
     old_version: str
     new_version: str
     new_text: str
+    text: str = ""
+    operator: str = ""
 
 
 def iter_dependency_groups(
@@ -140,20 +143,96 @@ def select_new_version(
     max_bump: str | None = None,
 ) -> str | None:
     """Pick the highest version greater than `old_version` allowed by the policies."""
-    old = Version(old_version)
-    best: Version | None = None
-    for version in versions:
-        if version <= old:
+    eligible = _eligible_versions(
+        versions,
+        residual,
+        Version(old_version),
+        allow_prerelease=allow_prerelease,
+        max_bump=max_bump,
+    )
+    return str(eligible[-1]) if eligible else None
+
+
+def eligible_versions(
+    update: Update,
+    versions: Sequence[Version],
+    *,
+    allow_prerelease: bool = False,
+    max_bump: str | None = None,
+) -> list[str]:
+    """Return, ascending, every version `update` could be bumped to under the policies.
+
+    Used by the resolver-aware search to look for a lower version that locks when the
+    latest does not.
+    """
+    requirement = parse_requirement(update.text)
+    if requirement is None:
+        return []
+    target = upgradable_specifier(requirement)
+    if target is None:
+        return []
+    _, residual = target
+    eligible = _eligible_versions(
+        versions,
+        residual,
+        Version(update.old_version),
+        allow_prerelease=allow_prerelease,
+        max_bump=max_bump,
+    )
+    return [str(version) for version in eligible]
+
+
+def at_version(update: Update, version: str) -> Update:
+    """Return a copy of `update` rewritten to bump to `version` instead."""
+    return dataclasses.replace(
+        update,
+        new_version=version,
+        new_text=_replace_version(update.text, update.operator, update.old_version, version),
+    )
+
+
+def _eligible_versions(
+    versions: Sequence[Version],
+    residual: SpecifierSet,
+    old: Version,
+    *,
+    allow_prerelease: bool,
+    max_bump: str | None,
+) -> list[Version]:
+    return sorted(
+        version
+        for version in versions
+        if version > old
+        and (allow_prerelease or not (version.is_prerelease or version.is_devrelease))
+        and residual.contains(version, prereleases=allow_prerelease)
+        and _within_bump(old, version, max_bump)
+    )
+
+
+def find_conflicts(error_text: str, names: set[str], exclude: str) -> list[str]:
+    """Find which other project dependencies are named in a uv resolver error."""
+    haystack = error_text.lower()
+    found: list[str] = []
+    for name in sorted(names):
+        if name == exclude:
             continue
-        if not allow_prerelease and (version.is_prerelease or version.is_devrelease):
-            continue
-        if not residual.contains(version, prereleases=allow_prerelease):
-            continue
-        if not _within_bump(old, version, max_bump):
-            continue
-        if best is None or version > best:
-            best = version
-    return str(best) if best is not None else None
+        variants = {name, name.replace("-", "_")}
+        if any(re.search(rf"\b{re.escape(variant)}\b", haystack) for variant in variants):
+            found.append(name)
+    return found
+
+
+def collect_all_names(dependency_groups: Sequence[tuple[str, items.Array]]) -> set[str]:
+    """Collect the canonical names of every declared dependency across the groups."""
+    names: set[str] = set()
+    for _, array in dependency_groups:
+        for specifier in array:
+            if not isinstance(specifier, str):
+                continue
+            requirement = parse_requirement(specifier)
+            if requirement is not None:
+                names.add(canonicalize_name(requirement.name))
+    return names
 
 
 def _within_bump(old: Version, new: Version, max_bump: str | None) -> bool:
@@ -225,6 +304,8 @@ def plan_updates(  # noqa: PLR0913
                     old_version=old_version,
                     new_version=new_version,
                     new_text=_replace_version(text, lower.operator, old_version, new_version),
+                    text=text,
+                    operator=lower.operator,
                 ),
             )
 

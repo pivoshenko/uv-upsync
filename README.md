@@ -35,6 +35,10 @@
   <em><code>uv lock --upgrade</code> for the version specifiers you actually write.</em>
 </p>
 
+<div align="center">
+  <img alt="demo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/demo.gif?raw=true">
+</div>
+
 ## Overview
 
 `uv-upsync` is `uv lock --upgrade` for the version specifiers you actually write.
@@ -125,6 +129,7 @@ Audited 12 dependencies, all up to date
 | `--check` | Exit with a non-zero status if any upgrades are available |
 | `--strict` | Roll back every upgrade and fail if the result does not lock |
 | `--no-lock` | Write the upgrades without running `uv lock` |
+| `--resolve` | When an upgrade does not lock, bump to the latest version that does |
 | `-q`, `--quiet` | Use quiet output |
 | `-v`, `--verbose` | Use verbose output (shows skipped dependencies) |
 | `--format <text\|json\|markdown>` | Output format for the upgrade summary |
@@ -138,15 +143,27 @@ Audited 12 dependencies, all up to date
 
 After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined
 upgrade does not resolve, the default **best-effort** mode keeps the largest
-subset of upgrades that locks and reports which ones were held back — so a single
-incompatible dependency never costs you the rest:
+subset of upgrades that locks and reports which ones were held back (naming the
+conflicting dependency when it can) — so a single incompatible dependency never
+costs you the rest:
 
 ```console
 $ uv-upsync
 Resolved 2 packages in 153ms
 Updated idna v2.0 -> v3.17
 Updated 1 dependency in pyproject.toml
-warning: Held back numpy v1.20 -> v2.4.6 (could not be resolved)
+warning: Held back docutils v0.16 -> v0.23 (conflicts with sphinx)
+Locked dependencies
+```
+
+With `--resolve`, an upgrade that does not lock at its latest version is bisected
+for the **latest version that does**, instead of being held back entirely:
+
+```console
+$ uv-upsync --resolve
+Updated idna v2.0 -> v3.17
+Updated numpy v1.20 -> v2.0.2   # 2.4.6 needs a newer Python; 2.0.2 is the latest that fits
+Updated 2 dependencies in pyproject.toml
 Locked dependencies
 ```
 
@@ -167,6 +184,7 @@ upgrade-package = ["httpx"]               # only these packages
 all-groups = true                         # upgrade every group
 max-bump = "minor"                        # hold back major upgrades
 prerelease = false                        # allow pre-release versions
+resolve = false                           # bisect for the latest version that locks
 index-url = "https://example.com/simple"  # PEP 691 index to query
 ```
 

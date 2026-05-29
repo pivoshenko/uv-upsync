@@ -21,6 +21,7 @@ def test_load_config_reads_all_fields() -> None:
         upgrade-package = ["httpx"]
         all-groups = true
         prerelease = true
+        resolve = true
         index-url = "https://example.com/simple"
         max-bump = "minor"
         """,
@@ -32,6 +33,7 @@ def test_load_config_reads_all_fields() -> None:
     assert settings.upgrade_package == ("httpx",)
     assert settings.all_groups is True
     assert settings.prerelease is True
+    assert settings.resolve is True
     assert settings.index_url == "https://example.com/simple"
     assert settings.max_bump == "minor"
 

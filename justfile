@@ -13,3 +13,7 @@ test:
 update:
   uv lock --upgrade
   uvx uv-upsync --exclude click --exclude tomlkit
+
+demo:
+  uv tool install --from . uv-upsync --force
+  vhs assets/demo.tape
