@@ -90,6 +90,9 @@ uv add --dev uv-upsync
 
 ## Usage
 
+> The examples below assume `uv-upsync` is installed. If it isn't, prefix any
+> command with `uvx` to run it without installing (e.g. `uvx uv-upsync --dry-run`).
+
 By default, `uv-upsync` upgrades every dependency in the `pyproject.toml` found
 in the current directory:
 
