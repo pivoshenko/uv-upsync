@@ -36,6 +36,7 @@ class Config:
     upgrade_package: tuple[str, ...] = ()
     all_groups: bool = False
     prerelease: bool = False
+    resolve: bool = False
     index_url: str | None = None
     max_bump: str | None = None
 
@@ -62,6 +63,8 @@ def load_config(pyproject: tomlkit.TOMLDocument | dict[str, Any]) -> Config:
         values["all_groups"] = _as_bool("all-groups", section["all-groups"])
     if "prerelease" in section:
         values["prerelease"] = _as_bool("prerelease", section["prerelease"])
+    if "resolve" in section:
+        values["resolve"] = _as_bool("resolve", section["resolve"])
     if "index-url" in section:
         values["index_url"] = _as_str("index-url", section["index-url"])
     if "max-bump" in section:
