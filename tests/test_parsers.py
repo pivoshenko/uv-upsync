@@ -114,6 +114,10 @@ def _array(specifiers: list[str]) -> items.Array:
     return array
 
 
+def _groups(specifiers: list[str]) -> list[tuple[str, items.Array]]:
+    return [("project", _array(specifiers))]
+
+
 @pytest.mark.parametrize(
     ("specifier", "name", "latest", "expected"),
     [
@@ -128,53 +132,72 @@ def _array(specifiers: list[str]) -> items.Array:
         ),
     ],
 )
-def test_apply_updates_rewrites_specifier(
+def test_plan_updates_computes_bump(
     specifier: str,
     name: str,
     latest: str,
     expected: str,
 ) -> None:
-    array = _array([specifier])
-    updates = parsers.apply_updates(array, {name: latest}, ())
-    assert array[0] == expected
+    updates = parsers.plan_updates(_groups([specifier]), {name: latest}, ())
     assert len(updates) == 1
+    assert updates[0].new_text == expected
+    assert updates[0].group == "project"
+    assert updates[0].index == 0
 
 
-def test_apply_updates_skips_when_up_to_date() -> None:
-    array = _array(["click>=8.1.7"])
-    updates = parsers.apply_updates(array, {"click": "8.1.7"}, ())
-    assert updates == []
-    assert array[0] == "click>=8.1.7"
+def test_plan_updates_skips_when_up_to_date() -> None:
+    assert parsers.plan_updates(_groups(["click>=8.1.7"]), {"click": "8.1.7"}, ()) == []
 
 
-def test_apply_updates_skips_when_no_version_found() -> None:
-    array = _array(["click>=8.0.0"])
-    updates = parsers.apply_updates(array, {"click": None}, ())
-    assert updates == []
+def test_plan_updates_skips_when_no_version_found() -> None:
+    assert parsers.plan_updates(_groups(["click>=8.0.0"]), {"click": None}, ()) == []
 
 
-def test_apply_updates_skips_pinned_and_invalid() -> None:
-    array = _array(["pinned==1.0.0", "invalid^1.0.0"])
-    updates = parsers.apply_updates(array, {}, ())
-    assert updates == []
+def test_plan_updates_skips_pinned_and_invalid() -> None:
+    assert parsers.plan_updates(_groups(["pinned==1.0.0", "invalid^1.0.0"]), {}, ()) == []
 
 
-def test_apply_updates_ignores_inline_tables() -> None:
+def test_plan_updates_ignores_inline_tables() -> None:
     inline_table = tomlkit.inline_table()
     inline_table["include-group"] = "extra"
     array = _array([])
     array.append(inline_table)
 
-    updates = parsers.apply_updates(array, {}, ())
-    assert updates == []
-    assert array[0] == inline_table
+    assert parsers.plan_updates([("project", array)], {}, ()) == []
 
 
-def test_apply_updates_respects_exclude() -> None:
-    array = _array(["click>=8.0.0"])
-    updates = parsers.apply_updates(array, {"click": "9.0.0"}, ("click",))
-    assert updates == []
-    assert array[0] == "click>=8.0.0"
+def test_plan_updates_respects_exclude() -> None:
+    assert parsers.plan_updates(_groups(["click>=8.0.0"]), {"click": "9.0.0"}, ("click",)) == []
+
+
+def test_apply_updates_builds_document_without_mutating_original() -> None:
+    pyproject = tomlkit.parse('[project]\ndependencies = ["click>=8.0.0", "httpx>=0.24.0"]\n')
+    groups = list(parsers.iter_dependency_groups(pyproject))
+    updates = parsers.plan_updates(groups, {"click": "8.4.1", "httpx": "0.28.1"}, ())
+
+    only_click = [update for update in updates if update.name == "click"]
+    document = parsers.apply_updates(pyproject, (), only_click)
+
+    assert document.unwrap()["project"]["dependencies"] == ["click>=8.4.1", "httpx>=0.24.0"]
+    # the original document is left untouched
+    assert pyproject.unwrap()["project"]["dependencies"] == ["click>=8.0.0", "httpx>=0.24.0"]
+
+
+def test_apply_updates_applies_subset_across_groups() -> None:
+    pyproject = tomlkit.parse(
+        """
+        [project]
+        dependencies = ["click>=8.0.0"]
+        [dependency-groups]
+        test = ["pytest>=7.0.0"]
+        """,
+    )
+    groups = list(parsers.iter_dependency_groups(pyproject))
+    updates = parsers.plan_updates(groups, {"click": "8.4.1", "pytest": "9.0.0"}, ())
+
+    document = parsers.apply_updates(pyproject, (), updates).unwrap()
+    assert document["project"]["dependencies"] == ["click>=8.4.1"]
+    assert document["dependency-groups"]["test"] == ["pytest>=9.0.0"]
 
 
 @pytest.mark.parametrize(

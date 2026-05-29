@@ -125,6 +125,19 @@ def _resolve_filepath(
     default=False,
     help="Exit with a non-zero status if any upgrades are available",
 )
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Roll back every upgrade and fail if the result does not lock",
+)
+@click.option(
+    "--no-lock",
+    "no_lock",
+    is_flag=True,
+    default=False,
+    help="Write the upgrades without running uv lock",
+)
 @click.option("-q", "--quiet", is_flag=True, default=False, help="Use quiet output")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Use verbose output")
 @click.option(
@@ -133,7 +146,7 @@ def _resolve_filepath(
     default="auto",
     help="Control the use of color in output",
 )
-def cli(  # noqa: C901, PLR0913, PLR0915
+def cli(  # noqa: C901, PLR0912, PLR0913, PLR0915
     project: pathlib.Path | None,
     directory: pathlib.Path | None,
     filepath: pathlib.Path | None,
@@ -147,6 +160,8 @@ def cli(  # noqa: C901, PLR0913, PLR0915
     no_cache: bool,
     dry_run: bool,
     check: bool,
+    strict: bool,
+    no_lock: bool,
     quiet: bool,
     verbose: bool,
     color: str,
@@ -203,10 +218,7 @@ def cli(  # noqa: C901, PLR0913, PLR0915
         versions = client.fetch_many(package_names)
     elapsed_ms = (time.perf_counter() - started_at) * 1000
 
-    updates = []
-    for _, array in dependency_groups:
-        updates.extend(parsers.apply_updates(array, versions, exclude, only))
-
+    updates = parsers.plan_updates(dependency_groups, versions, exclude, only)
     logger.status("Resolved", f"{len(package_names)} packages in {elapsed_ms:.0f}ms")
 
     if not updates:
@@ -215,30 +227,116 @@ def cli(  # noqa: C901, PLR0913, PLR0915
             raise click.exceptions.Exit(0)
         return
 
-    logger.status(
-        "Updated",
-        f"{len(updates)} {_pluralize(len(updates))} in {filepath.name}",
-    )
-
     if check:
+        _report_updates(updates, filepath)
         logger.warning(f"{len(updates)} {_pluralize(len(updates))} can be upgraded")
         raise click.exceptions.Exit(1)
 
     if dry_run:
+        _report_updates(updates, filepath)
         logger.warning("Dry run enabled, no changes were written to pyproject.toml")
         return
 
-    with filepath.open("w") as toml_file:
-        tomlkit.dump(pyproject, toml_file)
+    if no_lock:
+        _write(pyproject, group, updates, filepath, all_groups=all_groups)
+        _report_updates(updates, filepath)
+        return
 
+    applied = _apply_with_lock(
+        pyproject,
+        backup,
+        group,
+        updates,
+        filepath,
+        all_groups=all_groups,
+        offline=offline,
+        strict=strict,
+    )
+    _report_updates(applied, filepath)
+    for update in updates:
+        if update not in applied:
+            logger.warning(
+                f"Held back {update.name} v{update.old_version} -> v{update.new_version} "
+                f"(could not be resolved)",
+            )
+    if applied:
+        logger.status("Locked", "dependencies")
+
+
+def _report_updates(updates: list[parsers.Update], filepath: pathlib.Path) -> None:
+    for update in updates:
+        logger.update(update.name, update.old_version, update.new_version)
+    if updates:
+        logger.status("Updated", f"{len(updates)} {_pluralize(len(updates))} in {filepath.name}")
+
+
+def _write(
+    pyproject: tomlkit.TOMLDocument,
+    group: tuple[str, ...],
+    updates: list[parsers.Update],
+    filepath: pathlib.Path,
+    *,
+    all_groups: bool,
+) -> None:
+    document = parsers.apply_updates(pyproject, group, updates, all_groups=all_groups)
+    with filepath.open("w") as toml_file:
+        tomlkit.dump(document, toml_file)
+
+
+def _try_lock(  # noqa: PLR0913
+    pyproject: tomlkit.TOMLDocument,
+    group: tuple[str, ...],
+    updates: list[parsers.Update],
+    filepath: pathlib.Path,
+    *,
+    all_groups: bool,
+    offline: bool,
+) -> exceptions.UVCommandError | None:
+    _write(pyproject, group, updates, filepath, all_groups=all_groups)
     try:
         uv.lock(offline=offline, cwd=filepath.parent)
-        logger.status("Locked", "dependencies")
     except exceptions.UVCommandError as exception:
-        logger.error("Failed to lock the dependencies, rolling back changes", cause=exception)
+        return exception
+    return None
+
+
+def _apply_with_lock(  # noqa: PLR0913
+    pyproject: tomlkit.TOMLDocument,
+    backup: tomlkit.TOMLDocument,
+    group: tuple[str, ...],
+    updates: list[parsers.Update],
+    filepath: pathlib.Path,
+    *,
+    all_groups: bool,
+    offline: bool,
+    strict: bool,
+) -> list[parsers.Update]:
+    """Apply the upgrades and lock, returning the subset that resolved.
+
+    The full set is tried first (the common, fast path). On failure, `--strict`
+    rolls everything back, while the default best-effort mode keeps the maximal
+    subset of upgrades that locks.
+    """
+    error = _try_lock(pyproject, group, updates, filepath, all_groups=all_groups, offline=offline)
+    if error is None:
+        return updates
+
+    if strict:
         with filepath.open("w") as toml_file:
             tomlkit.dump(backup, toml_file)
-        raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
+        logger.error("Failed to lock the dependencies, rolling back changes", cause=error)
+        raise click.exceptions.Exit(ERROR_EXIT_CODE)
+
+    accepted: list[parsers.Update] = []
+    for update in updates:
+        candidate = [*accepted, update]
+        if _try_lock(pyproject, group, candidate, filepath, all_groups=all_groups, offline=offline):
+            continue
+        accepted = candidate
+
+    # The last trial may have written a failing candidate; restore the accepted set.
+    _write(pyproject, group, accepted, filepath, all_groups=all_groups)
+    return accepted
 
 
 def _pluralize(count: int) -> str:

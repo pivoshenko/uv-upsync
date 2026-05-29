@@ -61,6 +61,7 @@ preserving your formatting, comments, operators, extras and environment markers.
 - **Fast** — version lookups are fetched concurrently and cached
 - **Selective** — target specific groups or packages, or exclude packages
 - **Configurable** — persist defaults in a `[tool.uv-upsync]` table, overridable per run
+- **Resilient** — by default an upgrade that does not resolve is held back individually instead of failing the whole run (`--strict` to opt out)
 - **Safe** — `--dry-run` to preview and `--check` for CI
 - **Integrated** — ships a [pre-commit] hook and a GitHub Action
 
@@ -115,6 +116,8 @@ Audited 12 dependencies, all up to date
 | `-n`, `--no-cache` | Avoid reading from or writing to the cache |
 | `--dry-run` | Preview the upgrades without writing to `pyproject.toml` |
 | `--check` | Exit with a non-zero status if any upgrades are available |
+| `--strict` | Roll back every upgrade and fail if the result does not lock |
+| `--no-lock` | Write the upgrades without running `uv lock` |
 | `-q`, `--quiet` | Use quiet output |
 | `-v`, `--verbose` | Use verbose output (shows skipped dependencies) |
 | `--color <auto\|always\|never>` | Control the use of color in output |
@@ -122,6 +125,26 @@ Audited 12 dependencies, all up to date
 
 `uv-upsync` understands all three dependency tables: `project.dependencies`,
 `project.optional-dependencies`, and `dependency-groups` ([PEP 735]).
+
+### Resolution
+
+After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined
+upgrade does not resolve, the default **best-effort** mode keeps the largest
+subset of upgrades that locks and reports which ones were held back — so a single
+incompatible dependency never costs you the rest:
+
+```console
+$ uv-upsync
+Resolved 2 packages in 153ms
+Updated idna v2.0 -> v3.17
+Updated 1 dependency in pyproject.toml
+warning: Held back numpy v1.20 -> v2.4.6 (could not be resolved)
+Locked dependencies
+```
+
+Use `--strict` to instead roll back every upgrade and fail (exit code `2`) if the
+result does not lock, or `--no-lock` to write the upgrades and skip locking
+entirely.
 
 ## Configuration
 
