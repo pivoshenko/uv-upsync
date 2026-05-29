@@ -7,9 +7,14 @@ import typing
 import pytest
 import tomlkit
 
+from packaging.version import Version
 from tomlkit import items
 
 from uv_upsync import parsers
+
+
+def _versions(*raw: str) -> list[Version]:
+    return [Version(value) for value in raw]
 
 
 if typing.TYPE_CHECKING:
@@ -81,12 +86,14 @@ def test_parse_requirement(specifier: str, *, is_valid: bool) -> None:
         ("click>=8.0.0", True),
         ("httpx~=0.24.0", True),
         ("requests>2.0.0", True),
+        ("pkg>=1.0.0,<2.0.0", True),  # compound range is now supported
+        ("pkg>=1.0.0,!=1.5.0", True),
         ("pkg==1.0.0", False),
         ("pkg===1.0.0", False),
+        ("pkg>=1.0.0,==1.2.0", False),  # pinned clause present
         ("pkg<=2.0.0", False),
         ("pkg<2.0.0", False),
         ("pkg!=2.0.0", False),
-        ("pkg>=1.0.0,<2.0.0", False),  # multiple specifiers
         ("pkg", False),  # no specifier
     ],
 )
@@ -94,6 +101,17 @@ def test_upgradable_specifier(specifier: str, *, is_upgradable: bool) -> None:
     requirement = parsers.parse_requirement(specifier)
     assert requirement is not None
     assert (parsers.upgradable_specifier(requirement) is not None) is is_upgradable
+
+
+def test_upgradable_specifier_returns_lower_and_residual() -> None:
+    requirement = parsers.parse_requirement("pkg>=1.0.0,<2.0.0")
+    assert requirement is not None
+    result = parsers.upgradable_specifier(requirement)
+    assert result is not None
+    lower, residual = result
+    assert lower.operator == ">="
+    assert lower.version == "1.0.0"
+    assert str(residual) == "<2.0.0"
 
 
 def test_collect_package_names() -> None:
@@ -138,19 +156,27 @@ def test_plan_updates_computes_bump(
     latest: str,
     expected: str,
 ) -> None:
-    updates = parsers.plan_updates(_groups([specifier]), {name: latest}, ())
+    updates = parsers.plan_updates(_groups([specifier]), {name: _versions(latest)}, ())
     assert len(updates) == 1
     assert updates[0].new_text == expected
     assert updates[0].group == "project"
     assert updates[0].index == 0
 
 
+def test_plan_updates_raises_floor_within_compound_range() -> None:
+    # the cap is respected: 2.0.0 is available but excluded by <2.0.0
+    versions = {"pkg": _versions("1.0.0", "1.9.0", "2.0.0")}
+    updates = parsers.plan_updates(_groups(["pkg>=1.0.0,<2.0.0"]), versions, ())
+    assert len(updates) == 1
+    assert updates[0].new_text == "pkg>=1.9.0,<2.0.0"
+
+
 def test_plan_updates_skips_when_up_to_date() -> None:
-    assert parsers.plan_updates(_groups(["click>=8.1.7"]), {"click": "8.1.7"}, ()) == []
+    assert parsers.plan_updates(_groups(["click>=8.1.7"]), {"click": _versions("8.1.7")}, ()) == []
 
 
 def test_plan_updates_skips_when_no_version_found() -> None:
-    assert parsers.plan_updates(_groups(["click>=8.0.0"]), {"click": None}, ()) == []
+    assert parsers.plan_updates(_groups(["click>=8.0.0"]), {"click": []}, ()) == []
 
 
 def test_plan_updates_skips_pinned_and_invalid() -> None:
@@ -167,13 +193,42 @@ def test_plan_updates_ignores_inline_tables() -> None:
 
 
 def test_plan_updates_respects_exclude() -> None:
-    assert parsers.plan_updates(_groups(["click>=8.0.0"]), {"click": "9.0.0"}, ("click",)) == []
+    versions = {"click": _versions("9.0.0")}
+    assert parsers.plan_updates(_groups(["click>=8.0.0"]), versions, ("click",)) == []
+
+
+def test_plan_updates_skips_prereleases_by_default() -> None:
+    versions = {"pkg": _versions("1.0.0", "2.0.0b1")}
+    assert parsers.plan_updates(_groups(["pkg>=1.0.0"]), versions, ()) == []
+
+
+def test_plan_updates_allows_prereleases_when_enabled() -> None:
+    versions = {"pkg": _versions("1.0.0", "2.0.0b1")}
+    updates = parsers.plan_updates(_groups(["pkg>=1.0.0"]), versions, (), allow_prerelease=True)
+    assert updates[0].new_text == "pkg>=2.0.0b1"
+
+
+def test_plan_updates_respects_max_bump() -> None:
+    versions = {"pkg": _versions("1.0.0", "1.4.0", "2.0.0")}
+    updates = parsers.plan_updates(_groups(["pkg>=1.0.0"]), versions, (), max_bump="minor")
+    assert updates[0].new_text == "pkg>=1.4.0"
+
+
+def test_plan_updates_reports_bump_held_back_by_max_bump(mocker: MockerFixture) -> None:
+    skip = mocker.patch("uv_upsync.logging.Logger.skip")
+    versions = {"pkg": _versions("1.0.0", "2.0.0")}  # only a major bump is available
+
+    updates = parsers.plan_updates(_groups(["pkg>=1.0.0"]), versions, (), max_bump="minor")
+
+    assert updates == []
+    assert any("exceeds --max-bump" in call.args[0] for call in skip.call_args_list)
 
 
 def test_apply_updates_builds_document_without_mutating_original() -> None:
     pyproject = tomlkit.parse('[project]\ndependencies = ["click>=8.0.0", "httpx>=0.24.0"]\n')
     groups = list(parsers.iter_dependency_groups(pyproject))
-    updates = parsers.plan_updates(groups, {"click": "8.4.1", "httpx": "0.28.1"}, ())
+    versions = {"click": _versions("8.4.1"), "httpx": _versions("0.28.1")}
+    updates = parsers.plan_updates(groups, versions, ())
 
     only_click = [update for update in updates if update.name == "click"]
     document = parsers.apply_updates(pyproject, (), only_click)
@@ -193,11 +248,44 @@ def test_apply_updates_applies_subset_across_groups() -> None:
         """,
     )
     groups = list(parsers.iter_dependency_groups(pyproject))
-    updates = parsers.plan_updates(groups, {"click": "8.4.1", "pytest": "9.0.0"}, ())
+    versions = {"click": _versions("8.4.1"), "pytest": _versions("9.0.0")}
+    updates = parsers.plan_updates(groups, versions, ())
 
     document = parsers.apply_updates(pyproject, (), updates).unwrap()
     assert document["project"]["dependencies"] == ["click>=8.4.1"]
     assert document["dependency-groups"]["test"] == ["pytest>=9.0.0"]
+
+
+@pytest.mark.parametrize(
+    ("residual", "max_bump", "allow_prerelease", "expected"),
+    [
+        ("", None, False, "2.0.0"),
+        ("<2.0.0", None, False, "1.9.0"),
+        ("", "minor", False, "1.9.0"),
+        ("", "patch", False, "1.0.5"),
+        ("", None, True, "2.1.0rc1"),
+    ],
+)
+def test_select_new_version(
+    residual: str,
+    max_bump: str | None,
+    expected: str,
+    *,
+    allow_prerelease: bool,
+) -> None:
+    versions = _versions("1.0.0", "1.0.5", "1.9.0", "2.0.0", "2.1.0rc1")
+    result = parsers.select_new_version(
+        versions,
+        parsers.SpecifierSet(residual),
+        "1.0.0",
+        allow_prerelease=allow_prerelease,
+        max_bump=max_bump,
+    )
+    assert result == expected
+
+
+def test_select_new_version_returns_none_when_nothing_newer() -> None:
+    assert parsers.select_new_version(_versions("1.0.0"), parsers.SpecifierSet(), "1.0.0") is None
 
 
 @pytest.mark.parametrize(

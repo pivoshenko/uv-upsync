@@ -20,7 +20,9 @@ def test_load_config_reads_all_fields() -> None:
         group = ["test"]
         upgrade-package = ["httpx"]
         all-groups = true
+        prerelease = true
         index-url = "https://example.com/simple"
+        max-bump = "minor"
         """,
     )
     settings = config.load_config(pyproject)
@@ -29,7 +31,9 @@ def test_load_config_reads_all_fields() -> None:
     assert settings.group == ("test",)
     assert settings.upgrade_package == ("httpx",)
     assert settings.all_groups is True
+    assert settings.prerelease is True
     assert settings.index_url == "https://example.com/simple"
+    assert settings.max_bump == "minor"
 
 
 def test_load_config_reads_plain_dict() -> None:
@@ -61,5 +65,12 @@ def test_load_config_rejects_invalid_bool() -> None:
 
 def test_load_config_rejects_invalid_index_url() -> None:
     pyproject = tomlkit.parse("[tool.uv-upsync]\nindex-url = 42\n")
+    with pytest.raises(config.ConfigError):
+        config.load_config(pyproject)
+
+
+@pytest.mark.parametrize("value", ["'huge'", "42"])
+def test_load_config_rejects_invalid_max_bump(value: str) -> None:
+    pyproject = tomlkit.parse(f"[tool.uv-upsync]\nmax-bump = {value}\n")
     with pytest.raises(config.ConfigError):
         config.load_config(pyproject)

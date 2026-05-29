@@ -1,9 +1,11 @@
 """Module that contains a PyPI client that speaks the PEP 691 simple JSON API.
 
-The client resolves the latest available version for a set of packages from any
-PEP 691 compatible index. By default it talks to PyPI, but it honors the index
-configured for the project via `[[tool.uv.index]]` / `tool.uv.index-url`, which
-keeps uv-upsync aligned with uv's own index resolution.
+The client returns the full list of published versions for a set of packages
+from any PEP 691 compatible index. By default it talks to PyPI, but it honors
+the index configured for the project via `[[tool.uv.index]]` / `tool.uv.index-url`,
+which keeps uv-upsync aligned with uv's own index resolution. Choosing which
+version to bump to (respecting caps, pre-release and bump policies) is left to
+`parsers`, which has the specifier context.
 """
 
 from __future__ import annotations
@@ -53,25 +55,8 @@ def index_url_from_pyproject(pyproject: dict[str, Any]) -> str | None:
     return None
 
 
-def select_latest_version(versions: Iterable[str]) -> str | None:
-    """Pick the highest stable version, falling back to pre-releases if needed."""
-    parsed: list[Version] = []
-    for raw in versions:
-        try:
-            parsed.append(Version(raw))
-        except InvalidVersion:
-            continue
-
-    stable = [version for version in parsed if not (version.is_prerelease or version.is_devrelease)]
-    pool = stable or parsed
-    if not pool:
-        return None
-
-    return str(max(pool))
-
-
 class PyPIClient:
-    """Resolves the latest available version of packages from a simple index."""
+    """Fetches the published versions of packages from a simple index."""
 
     def __init__(
         self,
@@ -83,7 +68,7 @@ class PyPIClient:
     ) -> None:
         self._index_url = index_url.rstrip("/")
         self._offline = offline
-        self._cache: dict[str, str | None] | None = None if no_cache else {}
+        self._cache: dict[str, list[Version]] | None = None if no_cache else {}
         self._client = httpx.Client(
             timeout=timeout,
             follow_redirects=True,
@@ -104,31 +89,31 @@ class PyPIClient:
     def close(self) -> None:
         self._client.close()
 
-    def fetch_latest(self, name: str) -> str | None:
+    def fetch_versions(self, name: str) -> list[Version]:
         canonical_name = canonicalize_name(name)
 
         if self._cache is not None and canonical_name in self._cache:
             return self._cache[canonical_name]
 
-        version = self._fetch_latest_uncached(canonical_name)
+        versions = self._fetch_versions_uncached(canonical_name)
 
         if self._cache is not None:
-            self._cache[canonical_name] = version
-        return version
+            self._cache[canonical_name] = versions
+        return versions
 
-    def fetch_many(self, names: Iterable[str]) -> dict[str, str | None]:
+    def fetch_many(self, names: Iterable[str]) -> dict[str, list[Version]]:
         unique_names = {canonicalize_name(name) for name in names}
         if not unique_names:
             return {}
 
         with futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            results = executor.map(self.fetch_latest, unique_names)
+            results = executor.map(self.fetch_versions, unique_names)
             return dict(zip(unique_names, results, strict=True))
 
-    def _fetch_latest_uncached(self, canonical_name: str) -> str | None:
+    def _fetch_versions_uncached(self, canonical_name: str) -> list[Version]:
         if self._offline:
             logger.skip(f"Skipping {canonical_name} (offline)")
-            return None
+            return []
 
         url = f"{self._index_url}/{canonical_name}/"
         try:
@@ -137,6 +122,12 @@ class PyPIClient:
             payload = response.json()
         except (httpx.HTTPError, ValueError) as exception:
             logger.warning(f"Failed to fetch versions for {canonical_name}: {exception}")
-            return None
+            return []
 
-        return select_latest_version(payload.get("versions", []))
+        versions: list[Version] = []
+        for raw in payload.get("versions", []):
+            try:
+                versions.append(Version(raw))
+            except InvalidVersion:
+                continue
+        return sorted(versions)
