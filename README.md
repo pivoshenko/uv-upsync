@@ -31,6 +31,10 @@
   </a>
 </p>
 
+<p align="center">
+  <em><code>uv lock --upgrade</code> for the version specifiers you actually write.</em>
+</p>
+
 ## Overview
 
 `uv-upsync` is `uv lock --upgrade` for the version specifiers you actually write.
@@ -56,7 +60,9 @@ preserving your formatting, comments, operators, extras and environment markers.
   including comments and markers, is kept verbatim
 - **Fast** — version lookups are fetched concurrently and cached
 - **Selective** — target specific groups or packages, or exclude packages
+- **Configurable** — persist defaults in a `[tool.uv-upsync]` table, overridable per run
 - **Safe** — `--dry-run` to preview and `--check` for CI
+- **Integrated** — ships a [pre-commit] hook and a GitHub Action
 
 ## Installation
 
@@ -117,6 +123,25 @@ Audited 12 dependencies, all up to date
 `uv-upsync` understands all three dependency tables: `project.dependencies`,
 `project.optional-dependencies`, and `dependency-groups` ([PEP 735]).
 
+## Configuration
+
+`uv-upsync` reads defaults from a `[tool.uv-upsync]` table in your
+`pyproject.toml`, so you don't have to repeat them on every run:
+
+```toml
+[tool.uv-upsync]
+exclude = ["click", "ruff"]               # never upgrade these packages
+group = ["project", "test"]               # only these groups (omit for all)
+upgrade-package = ["httpx"]               # only these packages
+all-groups = true                         # upgrade every group
+index-url = "https://example.com/simple"  # PEP 691 index to query
+```
+
+Settings are resolved with the precedence **command line > `[tool.uv-upsync]` >
+defaults**: passing a flag always overrides the matching setting. The index is
+resolved as `--index-url` > `[tool.uv-upsync].index-url` > `[[tool.uv.index]]` >
+PyPI.
+
 ## Examples
 
 ### Preview the upgrades
@@ -156,6 +181,61 @@ uv-upsync --check
 `--check` writes nothing and exits with a non-zero status when upgrades are
 available, which makes it easy to wire into a scheduled job or pre-merge gate.
 
+## Pre-commit
+
+Add `uv-upsync` to your [pre-commit] configuration:
+
+```yaml
+repos:
+  - repo: https://github.com/pivoshenko/uv-upsync
+    rev: v2.3.2
+    hooks:
+      - id: uv-upsync
+```
+
+Two hooks are available:
+
+- **`uv-upsync`** — upgrade the bounds in `pyproject.toml` and re-lock (runs
+  `uv lock`, so `uv` must be on your `PATH`)
+- **`uv-upsync-check`** — fail the commit if any dependency can be upgraded,
+  without writing changes
+
+## GitHub Action
+
+Keep dependencies fresh on a schedule and open a pull request with the results:
+
+```yaml
+name: upgrade-dependencies
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday
+  workflow_dispatch:
+
+jobs:
+  upsync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pivoshenko/uv-upsync@v2.3.2
+        with:
+          args: --all-groups
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "build: upgrade dependencies"
+          title: "build: upgrade dependencies"
+          branch: build/uv-upsync
+```
+
+To gate pull requests instead, run the action with `args: --check` and drop the
+pull request step.
+
+| Input | Description | Default |
+| --- | --- | --- |
+| `args` | Additional arguments passed to `uv-upsync` | `""` |
+| `version` | Version of `uv-upsync` to run | latest |
+| `working-directory` | Directory to run in | `.` |
+
 [PEP 691]: https://peps.python.org/pep-0691
 [PEP 735]: https://peps.python.org/pep-0735
 [`packaging`]: https://packaging.pypa.io
+[pre-commit]: https://pre-commit.com

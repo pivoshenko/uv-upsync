@@ -1,0 +1,33 @@
+name: uv-upsync
+description: Upgrade dependency lower bounds in pyproject.toml to the latest versions
+author: pivoshenko
+branding:
+  icon: arrow-up-circle
+  color: purple
+
+inputs:
+  args:
+    description: Additional arguments passed to uv-upsync (e.g. "--check --all-groups")
+    required: false
+    default: ""
+  version:
+    description: Version of uv-upsync to run (defaults to the latest release)
+    required: false
+    default: ""
+  working-directory:
+    description: Directory to run uv-upsync in
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Run uv-upsync
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: >-
+        uvx ${{ inputs.version != '' && format('uv-upsync@{0}', inputs.version) || 'uv-upsync' }}
+        ${{ inputs.args }}

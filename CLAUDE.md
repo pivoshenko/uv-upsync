@@ -32,9 +32,12 @@ Source in `src/uv_upsync/` with clear separation:
 - **`parsers.py`** — TOML iteration and version-bumping logic. Parses specifiers with `packaging` (`Requirement`/`Specifier`), not regex. Handles three group types: `project.dependencies`, `project.optional-dependencies`, `dependency-groups` (PEP 735). Only raises lower bounds (`>=`, `>`, `~=`); pinned/capped/excluded operators are skipped. `_replace_version` rewrites only the version token, preserving formatting, extras and markers. Inline tables (e.g. `include-group`) are ignored
 - **`pypi.py`** — `PyPIClient` querying the PEP 691 simple JSON API (`Accept: application/vnd.pypi.simple.v1+json`). Index-aware: `index_url_from_pyproject` reads `[[tool.uv.index]]` / `tool.uv.index-url`. Fetches concurrently (thread pool), caches in memory, supports `--offline`/`--no-cache`. Picks the highest stable version via `packaging.version`
 - **`uv.py`** — Subprocess wrapper for `uv lock` (accepts `cwd` and `--offline`)
+- **`config.py`** — Reads `[tool.uv-upsync]` from pyproject (`exclude`, `group`, `upgrade-package`, `all-groups`, `index-url`) with validation. CLI args take precedence over config, which takes precedence over defaults
 - **`commands.py`** — Custom Click command/formatter classes; help mirrors uv's clap layout (bold headers, cyan flags)
-- **`logging.py`** — Singleton logger with uv-style output: `status` (green verb), `update` (`Updated <name> v<old> -> v<new>`), `warning:`/`error:` prefixes to stderr, verbose-only `skip`. Honors `--quiet`/`--verbose`/`--color`
+- **`logging.py`** — Singleton logger with uv-style output: `status` (green verb), `update` (`Updated <name> v<old> -> v<new>`), `warning:`/`error:` prefixes to stderr (with dimmed `Caused by:` chains), verbose-only `skip`. Honors `--quiet`/`--verbose`/`--color`
 - **`exceptions.py`** — `BaseError` and `UVCommandError`
+
+The entry point (`main`) wraps the Click command so failures render as `error:` lines (never tracebacks). Repo root also ships `.pre-commit-hooks.yaml` and a composite `action.yml`.
 
 ## Code Conventions
 

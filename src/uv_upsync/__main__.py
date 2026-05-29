@@ -18,6 +18,7 @@ from tomlkit.exceptions import TOMLKitError
 
 from uv_upsync import __version__
 from uv_upsync import commands
+from uv_upsync import config as upsync_config
 from uv_upsync import exceptions
 from uv_upsync import logging
 from uv_upsync import parsers
@@ -132,7 +133,7 @@ def _resolve_filepath(
     default="auto",
     help="Control the use of color in output",
 )
-def cli(  # noqa: C901, PLR0913
+def cli(  # noqa: C901, PLR0913, PLR0915
     project: pathlib.Path | None,
     directory: pathlib.Path | None,
     filepath: pathlib.Path | None,
@@ -171,6 +172,14 @@ def cli(  # noqa: C901, PLR0913
         logger.error(f"Failed to read {filepath}", cause=exception)
         raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
     backup = copy.deepcopy(pyproject)
+
+    # Resolve settings with the precedence: CLI > [tool.uv-upsync] > defaults.
+    settings = upsync_config.load_config(pyproject)
+    exclude = exclude or settings.exclude
+    group = group or settings.group
+    upgrade_package = upgrade_package or settings.upgrade_package
+    all_groups = all_groups or settings.all_groups
+    index_url = index_url or settings.index_url
 
     only = frozenset(canonicalize_name(name) for name in upgrade_package)
     dependency_groups = list(

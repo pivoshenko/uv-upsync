@@ -1,0 +1,17 @@
+- id: uv-upsync
+  name: uv-upsync
+  description: Upgrade dependency lower bounds in pyproject.toml to the latest versions
+  entry: uv-upsync
+  language: python
+  files: ^pyproject\.toml$
+  pass_filenames: false
+  require_serial: true
+
+- id: uv-upsync-check
+  name: uv-upsync (check)
+  description: Fail if any dependency in pyproject.toml can be upgraded
+  entry: uv-upsync --check
+  language: python
+  files: ^pyproject\.toml$
+  pass_filenames: false
+  require_serial: true
