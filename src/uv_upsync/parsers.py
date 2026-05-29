@@ -8,6 +8,7 @@ extras and environment markers are preserved verbatim.
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 
 from typing import TYPE_CHECKING
@@ -42,11 +43,14 @@ UPGRADABLE_OPERATORS = frozenset({">=", ">", "~="})
 
 @dataclasses.dataclass(frozen=True)
 class Update:
-    """A single version bump applied to a dependency specifier."""
+    """A planned version bump, locating the specifier and its replacement text."""
 
+    group: str
+    index: int
     name: str
     old_version: str
     new_version: str
+    new_text: str
 
 
 def iter_dependency_groups(
@@ -122,42 +126,59 @@ def collect_package_names(
     return names
 
 
-def apply_updates(
-    dependency_specifiers: items.Array,
+def plan_updates(
+    dependency_groups: Sequence[tuple[str, items.Array]],
     versions: dict[str, str | None],
     exclude: tuple[str, ...],
     only: frozenset[str] = frozenset(),
 ) -> list[Update]:
-    """Rewrite the specifiers in place, returning the list of applied updates."""
+    """Compute the version bumps for the given groups without mutating anything."""
     updates: list[Update] = []
-    for index, specifier in enumerate(dependency_specifiers):
-        requirement = _candidate_requirement(specifier, exclude, only)
-        if requirement is None:
-            continue
+    for label, array in dependency_groups:
+        for index, specifier in enumerate(array):
+            requirement = _candidate_requirement(specifier, exclude, only)
+            if requirement is None:
+                continue
 
-        target = upgradable_specifier(requirement)
-        if target is None:
-            continue
+            target = upgradable_specifier(requirement)
+            if target is None:
+                continue
 
-        text = cast("str", specifier)
-        canonical_name = canonicalize_name(requirement.name)
-        new_version = versions.get(canonical_name)
-        old_version = target.version
+            text = cast("str", specifier)
+            new_version = versions.get(canonicalize_name(requirement.name))
+            old_version = target.version
 
-        if new_version is None or Version(new_version) <= Version(old_version):
-            logger.skip(f"Skipping {text} (up to date)")
-            continue
+            if new_version is None or Version(new_version) <= Version(old_version):
+                logger.skip(f"Skipping {text} (up to date)")
+                continue
 
-        dependency_specifiers[index] = _replace_version(
-            text,
-            target.operator,
-            old_version,
-            new_version,
-        )
-        logger.update(requirement.name, old_version, new_version)
-        updates.append(Update(requirement.name, old_version, new_version))
+            updates.append(
+                Update(
+                    group=label,
+                    index=index,
+                    name=requirement.name,
+                    old_version=old_version,
+                    new_version=new_version,
+                    new_text=_replace_version(text, target.operator, old_version, new_version),
+                ),
+            )
 
     return updates
+
+
+def apply_updates(
+    pyproject: tomlkit.TOMLDocument,
+    selected_groups: tuple[str, ...],
+    updates: Sequence[Update],
+    *,
+    all_groups: bool = False,
+) -> tomlkit.TOMLDocument:
+    """Return a deep copy of the document with the given updates applied."""
+    document = copy.deepcopy(pyproject)
+    arrays = dict(iter_dependency_groups(document, selected_groups, all_groups=all_groups))
+    for update in updates:
+        arrays[update.group][update.index] = update.new_text
+    return document
 
 
 def _candidate_requirement(
