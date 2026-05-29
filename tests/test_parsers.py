@@ -288,6 +288,72 @@ def test_select_new_version_returns_none_when_nothing_newer() -> None:
     assert parsers.select_new_version(_versions("1.0.0"), parsers.SpecifierSet(), "1.0.0") is None
 
 
+def _planned(specifier: str, name: str, latest: str) -> parsers.Update:
+    updates = parsers.plan_updates(_groups([specifier]), {name: _versions(latest)}, ())
+    return updates[0]
+
+
+def test_eligible_versions_lists_candidates_respecting_residual() -> None:
+    versions = _versions("1.0.0", "1.5.0", "1.9.0", "2.0.0")
+    update = parsers.plan_updates(_groups(["pkg>=1.0.0,<2.0.0"]), {"pkg": versions}, ())[0]
+
+    assert parsers.eligible_versions(update, versions) == ["1.5.0", "1.9.0"]
+
+
+def test_at_version_rewrites_to_a_specific_version() -> None:
+    update = _planned("pkg>=1.0.0,<2.0.0", "pkg", "1.9.0")
+    rewritten = parsers.at_version(update, "1.5.0")
+
+    assert rewritten.new_version == "1.5.0"
+    assert rewritten.new_text == "pkg>=1.5.0,<2.0.0"
+
+
+@pytest.mark.parametrize("text", ["invalid^1.0", "pkg==1.0"])
+def test_eligible_versions_returns_empty_for_non_upgradable(text: str) -> None:
+    update = parsers.Update(
+        group="project",
+        index=0,
+        name="pkg",
+        old_version="1.0",
+        new_version="2.0",
+        new_text="",
+        text=text,
+        operator="",
+    )
+    assert parsers.eligible_versions(update, _versions("2.0")) == []
+
+
+@pytest.mark.parametrize(
+    ("error_text", "expected"),
+    [
+        ("Because numpy<2 is available and you require numpy", ["numpy"]),
+        ("requires Python >=3.11", []),
+        ("flask and werkzeug conflict", ["flask", "werkzeug"]),
+        ("enriched text mentions nothing", []),  # no false-positive on substrings
+    ],
+)
+def test_find_conflicts(error_text: str, expected: list[str]) -> None:
+    names = {"numpy", "flask", "werkzeug", "rich"}
+    assert parsers.find_conflicts(error_text, names, "pkg") == expected
+
+
+def test_find_conflicts_excludes_self() -> None:
+    assert parsers.find_conflicts("numpy and flask", {"numpy", "flask"}, "numpy") == ["flask"]
+
+
+def test_collect_all_names_includes_non_upgradable() -> None:
+    pyproject = tomlkit.parse(
+        """
+        [project]
+        dependencies = ["click>=8.0.0", "pinned==1.0.0", {git = "x"}]
+        [dependency-groups]
+        test = ["pytest>=7.0.0"]
+        """,
+    )
+    groups = list(parsers.iter_dependency_groups(pyproject))
+    assert parsers.collect_all_names(groups) == {"click", "pinned", "pytest"}
+
+
 @pytest.mark.parametrize(
     ("specifier", "operator", "old", "new", "expected"),
     [
