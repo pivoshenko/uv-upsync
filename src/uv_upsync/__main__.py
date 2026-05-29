@@ -1,8 +1,10 @@
-"""Module that contains the main entry point for the uv-upsync."""
+"""Module that contains the main entry point for uv-upsync."""
 
 from __future__ import annotations
 
+import os
 import copy
+import time
 import pathlib
 
 from typing import Any
@@ -11,144 +13,219 @@ from typing import cast
 import click
 import tomlkit
 
+from packaging.utils import canonicalize_name
+
+from uv_upsync import __version__
 from uv_upsync import commands
 from uv_upsync import logging
 from uv_upsync import parsers
+from uv_upsync import pypi
 from uv_upsync import uv
 
 
 logger = logging.Logger()
 
+COLOR_CHOICES = {"auto": None, "always": True, "never": False}
+
+
+def _resolve_filepath(
+    filepath: pathlib.Path | None,
+    project: pathlib.Path | None,
+) -> pathlib.Path:
+    if filepath is not None:
+        return filepath
+    if project is not None:
+        return project / "pyproject.toml"
+    return pathlib.Path.cwd() / "pyproject.toml"
+
 
 @click.command(cls=commands.Command)
+@click.version_option(__version__, "-V", "--version", message="%(prog)s %(version)s")
+@click.option(
+    "--project",
+    type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path),
+    default=None,
+    help="Path to the project directory containing the pyproject.toml file",
+)
+@click.option(
+    "--directory",
+    type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path),
+    default=None,
+    help="Change to DIR before running",
+)
 @click.option(
     "-f",
     "--filepath",
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
-    default=pathlib.Path.cwd() / "pyproject.toml",
-    help=f"Filepath to the pyproject.toml file "
-    f"(default: {click.style('./pyproject.toml', fg='magenta')})",
+    default=None,
+    hidden=True,
+    help="Path to the pyproject.toml file (deprecated, use --project)",
+)
+@click.option(
+    "-P",
+    "--upgrade-package",
+    "upgrade_package",
+    type=click.STRING,
+    multiple=True,
+    default=(),
+    help="Allow upgrades for only the given package(s)",
 )
 @click.option(
     "--exclude",
     type=click.STRING,
     multiple=True,
     default=(),
-    help="Packages to exclude from updating "
-    f"({click.style('multiple values allowed', fg='magenta')})",
+    help="Package(s) to exclude from upgrading",
 )
 @click.option(
     "--group",
     type=click.STRING,
     multiple=True,
     default=(),
-    help="Specific dependency group(s) to update. Can be 'project', optional-dependencies names, "
-    f"or dependency-groups names ({click.style('multiple values allowed', fg='magenta')}). "
-    "If not specified, all groups are updated.",
+    help="Upgrade dependencies in the given group(s) only",
+)
+@click.option(
+    "--all-groups",
+    is_flag=True,
+    default=False,
+    help="Upgrade dependencies in all groups",
+)
+@click.option(
+    "--index-url",
+    type=click.STRING,
+    default=None,
+    help="Base URL of the PEP 691 package index (defaults to the project's uv index or PyPI)",
+)
+@click.option(
+    "--offline",
+    is_flag=True,
+    default=False,
+    help="Disable network access, using only cached data",
+)
+@click.option(
+    "-n",
+    "--no-cache",
+    is_flag=True,
+    default=False,
+    help="Avoid reading from or writing to the cache",
 )
 @click.option(
     "--dry-run",
     is_flag=True,
-    type=click.BOOL,
     default=False,
-    help="Preview changes without writing to pyproject.toml",
+    help="Preview the upgrades without writing to pyproject.toml",
 )
-def main(  # noqa: C901, PLR0912, PLR0915
-    filepath: pathlib.Path,
+@click.option(
+    "--check",
+    is_flag=True,
+    default=False,
+    help="Exit with a non-zero status if any upgrades are available",
+)
+@click.option("-q", "--quiet", is_flag=True, default=False, help="Use quiet output")
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Use verbose output")
+@click.option(
+    "--color",
+    type=click.Choice(["auto", "always", "never"]),
+    default="auto",
+    help="Control the use of color in output",
+)
+def main(  # noqa: C901, PLR0913
+    project: pathlib.Path | None,
+    directory: pathlib.Path | None,
+    filepath: pathlib.Path | None,
+    upgrade_package: tuple[str, ...],
     exclude: tuple[str, ...],
     group: tuple[str, ...],
+    index_url: str | None,
     *,
+    all_groups: bool,
+    offline: bool,
+    no_cache: bool,
     dry_run: bool,
+    check: bool,
+    quiet: bool,
+    verbose: bool,
+    color: str,
 ) -> None:
-    """uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."""  # noqa: E501
+    """Automated dependency upgrades and version bumping for pyproject.toml."""
+    use_color = COLOR_CHOICES[color]
+    if use_color is None and os.environ.get("NO_COLOR"):
+        use_color = False
+    logger.configure(quiet=quiet, verbose=verbose, color=use_color)
+
+    if directory is not None:
+        os.chdir(directory)
+
+    filepath = _resolve_filepath(filepath, project)
+    if not filepath.is_file():
+        logger.error(f"No pyproject.toml found at {filepath}")
+        raise click.exceptions.Exit(2)
+
     with filepath.open() as toml_file:
         pyproject = tomlkit.load(toml_file)
-        bk_pyproject = copy.deepcopy(pyproject)
+    backup = copy.deepcopy(pyproject)
 
-    dependencies_groups = parsers.get_dependencies_groups(pyproject)
+    only = frozenset(canonicalize_name(name) for name in upgrade_package)
+    dependency_groups = list(
+        parsers.iter_dependency_groups(pyproject, group, all_groups=all_groups)
+    )
 
-    for group_name, dependency_group in dependencies_groups.items():
-        match group_name:
-            case "project":
-                match group:
-                    case () if not group:
-                        pass
-                    case _ if "project" in group:
-                        pass
-                    case _:
-                        logger.warning("Skipping 'project' dependencies")
-                        continue
+    resolved_index_url = index_url or pypi.index_url_from_pyproject(
+        cast("dict[str, Any]", pyproject),
+    )
 
-                updated_dependency_specifiers = parsers.update_dependency_specifiers(
-                    dependency_group,
-                    exclude,
-                )
-                project_section = cast("dict[str, Any]", pyproject["project"])
-                dependency_specifiers = cast("list[Any]", project_section["dependencies"])
-                for index in range(len(dependency_specifiers)):
-                    dependency_specifiers[index] = updated_dependency_specifiers[index]
+    package_names: set[str] = set()
+    for _, array in dependency_groups:
+        package_names |= parsers.collect_package_names(array, exclude, only)
 
-            case "optional-dependencies":
-                project_section = cast("dict[str, Any]", pyproject["project"])
-                dependency_groups = cast("dict[str, Any]", project_section[group_name])
-                for subgroup_name, dependency_specifiers in dependency_groups.items():
-                    match group:
-                        case () if not group:
-                            pass
-                        case _ if subgroup_name in group:
-                            pass
-                        case _:
-                            logger.warning(f"Skipping 'optional-dependencies.{subgroup_name}'")
-                            continue
+    started_at = time.perf_counter()
+    with pypi.PyPIClient(
+        resolved_index_url or pypi.DEFAULT_INDEX_URL,
+        offline=offline,
+        no_cache=no_cache,
+    ) as client:
+        versions = client.fetch_many(package_names)
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
 
-                    updated_dependency_specifiers = parsers.update_dependency_specifiers(
-                        dependency_specifiers,
-                        exclude,
-                    )
-                    for index in range(len(dependency_specifiers)):
-                        dependency_specifiers[index] = updated_dependency_specifiers[index]
+    updates = []
+    for _, array in dependency_groups:
+        updates.extend(parsers.apply_updates(array, versions, exclude, only))
 
-            case "dependency-groups":
-                dependency_groups = cast("dict[str, Any]", pyproject[group_name])
-                for subgroup_name, dependency_specifiers in dependency_groups.items():
-                    match group:
-                        case () if not group:
-                            pass
-                        case _ if subgroup_name in group:
-                            pass
-                        case _:
-                            logger.warning(f"Skipping 'dependency-groups.{subgroup_name}'")
-                            continue
+    logger.status("Resolved", f"{len(package_names)} packages in {elapsed_ms:.0f}ms")
 
-                    updated_dependency_specifiers = parsers.update_dependency_specifiers(
-                        dependency_specifiers,
-                        exclude,
-                    )
-                    for index in range(len(dependency_specifiers)):
-                        dependency_specifiers[index] = updated_dependency_specifiers[index]
-            case _:
-                pass
+    if not updates:
+        logger.status("Audited", f"{len(package_names)} dependencies, all up to date")
+        if check:
+            raise click.exceptions.Exit(0)
+        return
 
-    match dry_run:
-        case True:
-            logger.warning(
-                "Dry run mode enabled, no changes will be made to the pyproject.toml file",
-            )
-        case False:
-            with filepath.open("w") as toml_file:
-                tomlkit.dump(pyproject, toml_file)
+    logger.status(
+        "Updated",
+        f"{len(updates)} {_pluralize(len(updates))} in {filepath.name}",
+    )
 
-            try:
-                logger.info("Resolving dependencies...")
-                uv.lock()
-                logger.info("Dependencies resolved")
-            except Exception as exception:
-                logger.exception(
-                    "Failed to lock the dependencies. Rolling back changes",
-                    exception,
-                )
-                with filepath.open("w") as toml_file:
-                    tomlkit.dump(bk_pyproject, toml_file)
+    if check:
+        logger.warning(f"{len(updates)} {_pluralize(len(updates))} can be upgraded")
+        raise click.exceptions.Exit(1)
+
+    if dry_run:
+        logger.warning("Dry run enabled, no changes were written to pyproject.toml")
+        return
+
+    with filepath.open("w") as toml_file:
+        tomlkit.dump(pyproject, toml_file)
+
+    try:
+        uv.lock(offline=offline, cwd=filepath.parent)
+        logger.status("Locked", "dependencies")
+    except Exception as exception:  # noqa: BLE001
+        logger.error(f"Failed to lock the dependencies, rolling back changes\n{exception}")  # noqa: TRY400
+        with filepath.open("w") as toml_file:
+            tomlkit.dump(backup, toml_file)
+
+
+def _pluralize(count: int) -> str:
+    return "dependency" if count == 1 else "dependencies"
 
 
 if __name__ == "__main__":

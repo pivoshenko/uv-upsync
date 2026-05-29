@@ -1,4 +1,4 @@
-"""Module that contains tests for the module that contains implementation of the TOML parsers."""
+"""Module that contains tests for the module that contains the TOML parsers."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ import typing
 import pytest
 import tomlkit
 
-from uv_upsync import exceptions
+from tomlkit import items
+
 from uv_upsync import parsers
 
 
@@ -15,255 +16,186 @@ if typing.TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.mark.parametrize(
-    ("pyproject_content", "expected_groups"),
-    [
-        (
-            """
-            [project]
-            dependencies = ["click>=8.0.0", "httpx>=0.24.0"]
-            """,
-            {"project": ["click>=8.0.0", "httpx>=0.24.0"]},
-        ),
-        (
-            """
-            [project]
-            dependencies = []
-            """,
-            {},
-        ),
-        (
-            """
-            [project]
-            dependencies = ["click>=8.0.0"]
-            [project.optional-dependencies]
-            dev = ["pytest>=7.0.0"]
-            """,
-            {
-                "project": ["click>=8.0.0"],
-                "optional-dependencies": {"dev": ["pytest>=7.0.0"]},
-            },
-        ),
-        (
-            """
-            [project]
-            dependencies = ["click>=8.0.0"]
-            [dependency-groups]
-            test = ["pytest>=7.0.0"]
-            """,
-            {
-                "project": ["click>=8.0.0"],
-                "dependency-groups": {"test": ["pytest>=7.0.0"]},
-            },
-        ),
-        (
-            """
-            [project]
-            """,
-            {},
-        ),
-    ],
-)
-def test_get_dependencies_groups(
-    pyproject_content: str,
-    expected_groups: dict[str, list[str] | dict[str, list[str]]],
-) -> None:
-    pyproject = tomlkit.parse(pyproject_content)
-    groups = parsers.get_dependencies_groups(pyproject)
-    assert groups == expected_groups
+@pytest.fixture(autouse=True)
+def _silence_logger(mocker: MockerFixture) -> None:
+    mocker.patch("uv_upsync.logging.Logger.skip")
+    mocker.patch("uv_upsync.logging.Logger.update")
 
 
 @pytest.mark.parametrize(
-    ("dependency_specifier", "expected_name", "expected_operator"),
+    ("selected", "all_groups", "expected_labels"),
     [
-        ("click>=8.0.0", "click", ">="),
-        ("httpx==0.24.0", "httpx", "=="),
-        ("pytest~=7.0.0", "pytest", "~="),
-        ("requests>2.0.0", "requests", ">"),
-        ("flask<=2.0.0", "flask", "<="),
-        ("django<4.0.0", "django", "<"),
-        ("package===1.0.0", "package", "==="),
-        ("package-name>=1.0.0", "package-name", ">="),
-        ("package_name>=1.0.0", "package_name", ">="),
-        ("package >=  1.0.0", "package", ">="),
+        ((), False, ["project", "optional-dependencies.dev", "dependency-groups.test"]),
+        (("project",), False, ["project"]),
+        (("dev",), False, ["optional-dependencies.dev"]),
+        (("test",), False, ["dependency-groups.test"]),
+        (("missing",), True, ["project", "optional-dependencies.dev", "dependency-groups.test"]),
     ],
 )
-def test_get_dependency_name_and_operator_valid(
-    dependency_specifier: str,
-    expected_name: str,
-    expected_operator: str,
-) -> None:
-    name, operator = parsers.get_dependency_name_and_operator(dependency_specifier)
-    assert name == expected_name
-    assert operator == expected_operator
-
-
-@pytest.mark.parametrize(
-    ("dependency_specifier", "expected_exception"),
-    [
-        ("package^1.0.0", exceptions.InvalidDependencySpecifierError),
-        ("package/1.0.0", exceptions.InvalidDependencySpecifierError),
-        ("package:1.0.0", exceptions.InvalidDependencySpecifierError),
-        ("package@1.0.0", exceptions.InvalidDependencySpecifierError),
-        ("package", exceptions.NoOperatorFoundError),
-        ("package-name", exceptions.NoOperatorFoundError),
-        ("package>=1.0.0,<2.0.0", exceptions.MultipleOperatorsFoundError),
-        ("package>=1.0.0,<=2.0.0", exceptions.MultipleOperatorsFoundError),
-    ],
-)
-def test_get_dependency_name_and_operator_invalid(
-    dependency_specifier: str,
-    expected_exception: type[exceptions.BaseError],
-) -> None:
-    with pytest.raises(expected_exception):
-        parsers.get_dependency_name_and_operator(dependency_specifier)
-
-
-@pytest.mark.parametrize(
-    ("dependency_specifier", "operator", "exclude", "should_update"),
-    [
-        ("click>=8.0.0", ">=", (), True),
-        ("click==8.0.0", "==", (), False),  # == Operator ignored
-        ("click<=8.0.0", "<=", (), False),  # <= Operator ignored
-        ("click<8.0.0", "<", (), False),  # < Operator ignored
-        ("click>=8.0.0", ">=", ("click",), False),  # Excluded by name
-        ("httpx~=0.24.0", "~=", (), True),
-        ("requests>2.0.0", ">", (), True),
-    ],
-)
-def test_update_dependency_specifier(
-    mocker: MockerFixture,
-    dependency_specifier: str,
-    operator: str,
-    exclude: tuple[str, ...],
+def test_iter_dependency_groups(
+    selected: tuple[str, ...],
+    expected_labels: list[str],
     *,
-    should_update: bool,
+    all_groups: bool,
 ) -> None:
-    mock_fetch = mocker.patch(
-        "uv_upsync.pypi.fetch_latest_dependency_version",
-        return_value="9.9.9",
+    pyproject = tomlkit.parse(
+        """
+        [project]
+        dependencies = ["click>=8.0.0"]
+        [project.optional-dependencies]
+        dev = ["pytest>=7.0.0"]
+        [dependency-groups]
+        test = ["coverage>=6.0.0"]
+        """,
     )
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
+    labels = [
+        label
+        for label, _ in parsers.iter_dependency_groups(pyproject, selected, all_groups=all_groups)
+    ]
+    assert labels == expected_labels
 
-    specifier = parsers.update_dependency_specifier(dependency_specifier, exclude)
 
-    if should_update:
-        assert mock_fetch.called
-        assert "9.9.9" in specifier
-    elif exclude or operator in ("==", "<=", "<"):
-        assert specifier == dependency_specifier
+def test_iter_dependency_groups_handles_missing_sections() -> None:
+    pyproject = tomlkit.parse("[project]\nname = 'demo'\n")
+    assert list(parsers.iter_dependency_groups(pyproject)) == []
 
 
 @pytest.mark.parametrize(
-    ("dependency_specifier", "latest_version", "expected_specifier"),
+    ("specifier", "is_valid"),
     [
-        ("click>=8.0.0", "8.1.7", "click>=8.1.7"),
-        ("httpx~=0.24.0", "0.28.1", "httpx~=0.28.1"),
-        ("requests>2.0.0", "2.31.0", "requests>2.31.0"),
-        ("click>=8.0.0;python_version>='3.8'", "8.1.7", "click>=8.1.7;python_version>='3.8'"),
-        ("click>=8.0.0; python_version>='3.8'", "8.1.7", "click>=8.1.7; python_version>='3.8'"),
+        ("click>=8.0.0", True),
+        ("coverage[toml]>=7.0.0", True),
+        ("click>=8.0.0; python_version >= '3.10'", True),
+        ("invalid^1.0.0", False),
+        ("pkg=1.0.0", False),
     ],
 )
-def test_update_dependency_specifier_with_version(
-    mocker: MockerFixture,
-    dependency_specifier: str,
-    latest_version: str,
-    expected_specifier: str,
-) -> None:
-    mocker.patch(
-        "uv_upsync.pypi.fetch_latest_dependency_version",
-        return_value=latest_version,
-    )
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
-
-    specifier = parsers.update_dependency_specifier(dependency_specifier, ())
-    assert specifier == expected_specifier
-
-
-def test_update_dependency_specifier_fetch_returns_none(mocker: MockerFixture) -> None:
-    mocker.patch("uv_upsync.pypi.fetch_latest_dependency_version", return_value=None)
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
-
-    dependency_specifier = "click>=8.0.0"
-    specifier = parsers.update_dependency_specifier(dependency_specifier, ())
-    assert specifier == dependency_specifier
+def test_parse_requirement(specifier: str, *, is_valid: bool) -> None:
+    result = parsers.parse_requirement(specifier)
+    assert (result is not None) is is_valid
 
 
 @pytest.mark.parametrize(
-    ("dependency_specifiers", "exclude", "expected_count"),
+    ("specifier", "is_upgradable"),
     [
-        (["click>=8.0.0", "httpx>=0.24.0"], (), 2),
-        (["click>=8.0.0", "httpx>=0.24.0"], ("click",), 2),
-        (["click>=8.0.0"], (), 1),
-        ([], (), 0),
+        ("click>=8.0.0", True),
+        ("httpx~=0.24.0", True),
+        ("requests>2.0.0", True),
+        ("pkg==1.0.0", False),
+        ("pkg===1.0.0", False),
+        ("pkg<=2.0.0", False),
+        ("pkg<2.0.0", False),
+        ("pkg!=2.0.0", False),
+        ("pkg>=1.0.0,<2.0.0", False),  # multiple specifiers
+        ("pkg", False),  # no specifier
     ],
 )
-def test_update_dependency_specifiers(
-    mocker: MockerFixture,
-    dependency_specifiers: list[str],
-    exclude: tuple[str, ...],
-    expected_count: int,
+def test_upgradable_specifier(specifier: str, *, is_upgradable: bool) -> None:
+    requirement = parsers.parse_requirement(specifier)
+    assert requirement is not None
+    assert (parsers.upgradable_specifier(requirement) is not None) is is_upgradable
+
+
+def test_collect_package_names() -> None:
+    specifiers = ["click>=8.0.0", "Coverage[toml]>=7.0.0", "pinned==1.0.0", "pytest"]
+    names = parsers.collect_package_names(specifiers, ())
+    assert names == {"click", "coverage"}
+
+
+def test_collect_package_names_respects_exclude_and_only() -> None:
+    specifiers = ["click>=8.0.0", "httpx>=0.24.0", "ruff>=0.1.0"]
+    assert parsers.collect_package_names(specifiers, ("click",)) == {"httpx", "ruff"}
+    assert parsers.collect_package_names(specifiers, (), frozenset({"httpx"})) == {"httpx"}
+
+
+def _array(specifiers: list[str]) -> items.Array:
+    array = tomlkit.array()
+    array.extend(specifiers)
+    return array
+
+
+@pytest.mark.parametrize(
+    ("specifier", "name", "latest", "expected"),
+    [
+        ("click>=8.0.0", "click", "8.1.7", "click>=8.1.7"),
+        ("httpx~=0.24.0", "httpx", "0.28.1", "httpx~=0.28.1"),
+        ("requests>2.0.0", "requests", "2.31.0", "requests>2.31.0"),
+        (
+            "click>=8.0.0; python_version>='3.8'",
+            "click",
+            "8.1.7",
+            "click>=8.1.7; python_version>='3.8'",
+        ),
+    ],
+)
+def test_apply_updates_rewrites_specifier(
+    specifier: str,
+    name: str,
+    latest: str,
+    expected: str,
 ) -> None:
-    mocker.patch("uv_upsync.pypi.fetch_latest_dependency_version", return_value="9.9.9")
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
-
-    specifiers = parsers.update_dependency_specifiers(dependency_specifiers, exclude)
-    assert len(specifiers) == expected_count
+    array = _array([specifier])
+    updates = parsers.apply_updates(array, {name: latest}, ())
+    assert array[0] == expected
+    assert len(updates) == 1
 
 
-def test_update_dependency_specifiers_with_inline_table(mocker: MockerFixture) -> None:
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
+def test_apply_updates_skips_when_up_to_date() -> None:
+    array = _array(["click>=8.1.7"])
+    updates = parsers.apply_updates(array, {"click": "8.1.7"}, ())
+    assert updates == []
+    assert array[0] == "click>=8.1.7"
 
+
+def test_apply_updates_skips_when_no_version_found() -> None:
+    array = _array(["click>=8.0.0"])
+    updates = parsers.apply_updates(array, {"click": None}, ())
+    assert updates == []
+
+
+def test_apply_updates_skips_pinned_and_invalid() -> None:
+    array = _array(["pinned==1.0.0", "invalid^1.0.0"])
+    updates = parsers.apply_updates(array, {}, ())
+    assert updates == []
+
+
+def test_apply_updates_ignores_inline_tables() -> None:
     inline_table = tomlkit.inline_table()
-    inline_table["git"] = "https://github.com/user/repo.git"
+    inline_table["include-group"] = "extra"
+    array = _array([])
+    array.append(inline_table)
 
-    dependency_specifiers = [inline_table]
-    specifiers = parsers.update_dependency_specifiers(dependency_specifiers, ())
-
-    assert len(specifiers) == 1
-    assert specifiers[0] == inline_table
+    updates = parsers.apply_updates(array, {}, ())
+    assert updates == []
+    assert array[0] == inline_table
 
 
-def test_update_dependency_specifiers_with_invalid_specifier(mocker: MockerFixture) -> None:
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
-    mocker.patch("uv_upsync.logging.Logger.exception")
-
-    dependency_specifiers = ["invalid^1.0.0"]
-    specifiers = parsers.update_dependency_specifiers(dependency_specifiers, ())
-
-    assert len(specifiers) == 1
-    assert specifiers[0] == "invalid^1.0.0"
+def test_apply_updates_respects_exclude() -> None:
+    array = _array(["click>=8.0.0"])
+    updates = parsers.apply_updates(array, {"click": "9.0.0"}, ("click",))
+    assert updates == []
+    assert array[0] == "click>=8.0.0"
 
 
 @pytest.mark.parametrize(
-    ("dependency_specifiers", "exclude"),
+    ("specifier", "operator", "old", "new", "expected"),
     [
-        (["click>=8.0.0", "httpx>=0.24.0", "pytest>=7.0.0"], ("pytest",)),
-        (["package1>=1.0.0", "package2>=2.0.0"], ("package1", "package2")),
+        (
+            "tomlkit >= 0.10.0 ; python_version >= '3.10'",
+            ">=",
+            "0.10.0",
+            "0.15.0",
+            "tomlkit >= 0.15.0 ; python_version >= '3.10'",
+        ),
+        ("click >=  8.0.0", ">=", "8.0.0", "8.4.1", "click >=  8.4.1"),
+        ("httpx~=0.24.0", "~=", "0.24.0", "0.28.1", "httpx~=0.28.1"),
     ],
 )
-def test_update_dependency_specifiers_with_exclusions(
-    mocker: MockerFixture,
-    dependency_specifiers: list[str],
-    exclude: tuple[str, ...],
+def test_replace_version_preserves_formatting(
+    specifier: str,
+    operator: str,
+    old: str,
+    new: str,
+    expected: str,
 ) -> None:
-    mocker.patch(
-        "uv_upsync.pypi.fetch_latest_dependency_version",
-        return_value="9.9.9",
-    )
-    mocker.patch("uv_upsync.logging.Logger.warning")
-    mocker.patch("uv_upsync.logging.Logger.info")
-
-    specifiers = parsers.update_dependency_specifiers(dependency_specifiers, exclude)
-
-    assert len(specifiers) == len(dependency_specifiers)
-
-    for dependency in dependency_specifiers:
-        if any(exc in dependency for exc in exclude):
-            assert dependency in specifiers
+    assert parsers._replace_version(specifier, operator, old, new) == expected

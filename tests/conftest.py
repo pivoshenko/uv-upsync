@@ -9,4 +9,4 @@ import pytest
 def _reset_logger_singleton() -> None:
     from uv_upsync.logging import Logger  # noqa: PLC0415
 
-    Logger._instance = None  # noqa: SLF001
+    Logger._instance = None

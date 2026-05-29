@@ -1,4 +1,4 @@
-"""Module that contains custom implementation of the `click.Command` with enriched formatting."""
+"""Module that contains a `click.Command` whose help mirrors uv's clap output."""
 
 from __future__ import annotations
 
@@ -13,15 +13,12 @@ if TYPE_CHECKING:
 
 class HelpFormatter(click.HelpFormatter):
     def write_usage(self, prog: str, args: str = "", prefix: str | None = None) -> None:
-        match prefix:
-            case None:
-                prefix = click.style("Usage: ", fg="green", bold=True)
-            case _:
-                pass
+        if prefix is None:
+            prefix = click.style("Usage: ", bold=True)
         super().write_usage(prog, args, prefix)
 
     def write_heading(self, heading: str) -> None:
-        self.write(click.style(f"{heading}:\n", fg="green", bold=True))
+        self.write(click.style(f"{heading}:\n", bold=True))
 
     def write_dl(
         self,
@@ -29,10 +26,7 @@ class HelpFormatter(click.HelpFormatter):
         col_max: int = 30,
         col_spacing: int = 2,
     ) -> None:
-        colored_rows = []
-        for option_name, help_text in rows:
-            colored_option = click.style(option_name, fg="magenta", bold=True)
-            colored_rows.append((colored_option, help_text))
+        colored_rows = [(click.style(name, fg="cyan", bold=True), text) for name, text in rows]
         super().write_dl(colored_rows, col_max, col_spacing)
 
 

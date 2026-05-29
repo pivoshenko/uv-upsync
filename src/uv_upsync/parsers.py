@@ -1,155 +1,197 @@
-"""Module that contains implementation of the TOML parsers."""
+"""Module that contains the TOML parsing and version-bumping logic.
+
+Dependency specifiers are parsed with `packaging` (the canonical PEP 440/508
+implementation) for correctness, while the actual rewrite is a surgical
+replacement of the version token so that the author's formatting, operators,
+extras and environment markers are preserved verbatim.
+"""
 
 from __future__ import annotations
 
-import re
+import dataclasses
 
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-import tomlkit
-
+from packaging.requirements import InvalidRequirement
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+from packaging.version import Version
 from tomlkit import items
 
-from uv_upsync import exceptions
 from uv_upsync import logging
-from uv_upsync import pypi
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Sequence
+
+    import tomlkit
+
+    from packaging.specifiers import Specifier
 
 
 logger = logging.Logger()
 
-
-def get_dependencies_groups(pyproject: tomlkit.TOMLDocument) -> dict[str, list]:
-    dependencies_groups = {}
-
-    project_section = cast("dict[str, Any]", pyproject["project"])
-    project_dependencies = list(project_section.get("dependencies", []))
-    match project_dependencies:
-        case []:
-            pass
-        case _:
-            dependencies_groups.update({"project": project_dependencies})
-
-    optional_dependencies = dict(project_section.get("optional-dependencies", {}))
-    match optional_dependencies:
-        case _ if optional_dependencies:
-            dependencies_groups.update({"optional-dependencies": optional_dependencies})
-
-    dependency_groups = dict(pyproject.get("dependency-groups", {}))
-    match dependency_groups:
-        case _ if dependency_groups:
-            dependencies_groups.update({"dependency-groups": dependency_groups})
-
-    return dependencies_groups
+# Operators whose lower bound it is safe to raise. Pinned (`==`, `===`), upper
+# bound (`<`, `<=`) and exclusion (`!=`) constraints are intentionally left
+# untouched, mirroring uv's conservative `--upgrade` behavior.
+UPGRADABLE_OPERATORS = frozenset({">=", ">", "~="})
 
 
-def get_dependency_name_and_operator(dependency_specifier: str) -> tuple[str, str]:
-    valid_operators = ("===", "==", "~=", ">=", ">", "<=", "<")
-    invalid_operators = ("^", "/", ":", "@")
+@dataclasses.dataclass(frozen=True)
+class Update:
+    """A single version bump applied to a dependency specifier."""
 
-    # Strip environment markers (everything after semicolon) before parsing
-    dependency_part = dependency_specifier.split(";", maxsplit=1)[0]
-
-    match any(operator in dependency_part for operator in invalid_operators):
-        case True:
-            raise exceptions.InvalidDependencySpecifierError(dependency_specifier)
-        case False:
-            pass
-
-    operators = re.findall("|".join(valid_operators), dependency_part)
-    match len(operators):
-        case 0:
-            raise exceptions.NoOperatorFoundError(dependency_specifier)
-        case 1:
-            operator, *_ = operators
-            dependency_name, *_ = dependency_part.replace(" ", "").split(operator)
-            return dependency_name.strip(), operator.strip()
-        case _:
-            raise exceptions.MultipleOperatorsFoundError(dependency_specifier)
+    name: str
+    old_version: str
+    new_version: str
 
 
-def update_dependency_specifier(dependency_specifier: str, exclude: tuple[str, ...]) -> str:
-    ignore_operators = ("==", "<=", "<")
+def iter_dependency_groups(
+    pyproject: tomlkit.TOMLDocument,
+    selected_groups: tuple[str, ...] = (),
+    *,
+    all_groups: bool = False,
+) -> Iterator[tuple[str, items.Array]]:
+    """Yield `(label, array)` for every selected dependency list in the document.
 
-    dependency_name, operator = get_dependency_name_and_operator(dependency_specifier)
-    match dependency_name in exclude:
-        case True:
-            logger.warning(f"Excluding dependency {dependency_name!r}")
-            return dependency_specifier
-        case False:
-            pass
+    The yielded arrays are the live tomlkit objects, so mutating them in place
+    updates the underlying document while preserving formatting and comments.
+    """
+    project = cast("dict[str, Any]", pyproject.get("project", {}))
 
-    match operator in ignore_operators:
-        case True:
-            logger.warning(f"Excluding dependency {dependency_name!r}")
-            return dependency_specifier
-        case False:
-            pass
+    dependencies = project.get("dependencies")
+    if isinstance(dependencies, items.Array) and _is_selected(
+        "project", selected_groups, all_groups=all_groups
+    ):
+        yield "project", dependencies
 
-    latest_dependency_version = pypi.fetch_latest_dependency_version(dependency_name)
-    match latest_dependency_version:
-        case None:
-            return dependency_specifier
-        case _:
-            match ";" in dependency_specifier:
-                case True:
-                    after_semi = "".join(dependency_specifier.split(";")[1:])
-                    updated_dependency_specifier = (
-                        f"{dependency_name}{operator}{latest_dependency_version};{after_semi}"
-                    )
-                case False:
-                    updated_dependency_specifier = (
-                        f"{dependency_name}{operator}{latest_dependency_version}"
-                    )
+    optional = project.get("optional-dependencies", {})
+    for name, array in optional.items():
+        if isinstance(array, items.Array) and _is_selected(
+            name, selected_groups, all_groups=all_groups
+        ):
+            yield f"optional-dependencies.{name}", array
 
-    return updated_dependency_specifier
+    groups = pyproject.get("dependency-groups", {})
+    for name, array in groups.items():
+        if isinstance(array, items.Array) and _is_selected(
+            name, selected_groups, all_groups=all_groups
+        ):
+            yield f"dependency-groups.{name}", array
 
 
-def update_dependency_specifiers(
+def _is_selected(name: str, selected_groups: tuple[str, ...], *, all_groups: bool) -> bool:
+    return all_groups or not selected_groups or name in selected_groups
+
+
+def parse_requirement(specifier: str) -> Requirement | None:
+    """Parse a specifier into a `Requirement`, returning `None` if it is not one."""
+    try:
+        return Requirement(specifier)
+    except InvalidRequirement:
+        return None
+
+
+def upgradable_specifier(requirement: Requirement) -> Specifier | None:
+    """Return the single specifier whose lower bound can be raised, else `None`."""
+    specifiers = list(requirement.specifier)
+    if len(specifiers) != 1:
+        return None
+
+    specifier = specifiers[0]
+    if specifier.operator not in UPGRADABLE_OPERATORS:
+        return None
+
+    return specifier
+
+
+def collect_package_names(
     dependency_specifiers: Sequence[object],
     exclude: tuple[str, ...],
-) -> list[object]:
-    updated_dependency_specifiers = []
-    for dependency_specifier in dependency_specifiers:
-        # Inline tables (tomlkit inline_table) are not string specifiers
-        if isinstance(dependency_specifier, items.InlineTable):
-            logger.warning(f"Skipping inline table: {dependency_specifier!r}")
-            updated_dependency_specifiers.append(dependency_specifier)
+    only: frozenset[str] = frozenset(),
+) -> set[str]:
+    """Collect the canonical names of packages that are candidates for an update."""
+    names: set[str] = set()
+    for specifier in dependency_specifiers:
+        requirement = _candidate_requirement(specifier, exclude, only)
+        if requirement is not None and upgradable_specifier(requirement) is not None:
+            names.add(canonicalize_name(requirement.name))
+    return names
+
+
+def apply_updates(
+    dependency_specifiers: items.Array,
+    versions: dict[str, str | None],
+    exclude: tuple[str, ...],
+    only: frozenset[str] = frozenset(),
+) -> list[Update]:
+    """Rewrite the specifiers in place, returning the list of applied updates."""
+    updates: list[Update] = []
+    for index, specifier in enumerate(dependency_specifiers):
+        requirement = _candidate_requirement(specifier, exclude, only)
+        if requirement is None:
             continue
 
-        # Only strings are processed for version lookups and exclusions
-        if isinstance(dependency_specifier, str):
-            if any(d_exclude in dependency_specifier for d_exclude in exclude):
-                logger.warning(f"Skipping {dependency_specifier!r} (excluded)")
-                updated_dependency_specifiers.append(dependency_specifier)
-                continue
-
-            try:
-                get_dependency_name_and_operator(dependency_specifier)
-            except exceptions.BaseError as exception:
-                logger.exception(f"Skipping invalid specifier: {dependency_specifier!r}", exception)
-                updated_dependency_specifiers.append(dependency_specifier)
-                continue
-
-            updated_dependency_specifier = update_dependency_specifier(
-                dependency_specifier, exclude
-            )
-            if dependency_specifier != updated_dependency_specifier:
-                logger.info(
-                    f"Updating {dependency_specifier!r} to {updated_dependency_specifier!r}"
-                )
-                updated_dependency_specifiers.append(updated_dependency_specifier)
-            else:
-                logger.warning(f"Skipping {dependency_specifier!r} (no new version available)")
-                updated_dependency_specifiers.append(dependency_specifier)
+        target = upgradable_specifier(requirement)
+        if target is None:
             continue
 
-        # Unknown types: append as-is
-        updated_dependency_specifiers.append(dependency_specifier)
+        text = cast("str", specifier)
+        canonical_name = canonicalize_name(requirement.name)
+        new_version = versions.get(canonical_name)
+        old_version = target.version
 
-    return updated_dependency_specifiers
+        if new_version is None or Version(new_version) <= Version(old_version):
+            logger.skip(f"Skipping {text} (up to date)")
+            continue
+
+        dependency_specifiers[index] = _replace_version(
+            text,
+            target.operator,
+            old_version,
+            new_version,
+        )
+        logger.update(requirement.name, old_version, new_version)
+        updates.append(Update(requirement.name, old_version, new_version))
+
+    return updates
+
+
+def _candidate_requirement(
+    specifier: object,
+    exclude: tuple[str, ...],
+    only: frozenset[str],
+) -> Requirement | None:
+    if isinstance(specifier, items.InlineTable) or not isinstance(specifier, str):
+        return None
+
+    requirement = parse_requirement(specifier)
+    if requirement is None:
+        logger.skip(f"Skipping {specifier!r} (not a valid specifier)")
+        return None
+
+    canonical_name = canonicalize_name(requirement.name)
+    if requirement.name in exclude or canonical_name in {
+        canonicalize_name(name) for name in exclude
+    }:
+        logger.skip(f"Skipping {specifier} (excluded)")
+        return None
+
+    if only and canonical_name not in only:
+        return None
+
+    return requirement
+
+
+def _replace_version(specifier: str, operator: str, old_version: str, new_version: str) -> str:
+    """Replace only the version token, preserving operators, spacing and markers."""
+    requirement_part, separator, marker = specifier.partition(";")
+
+    operator_index = requirement_part.find(operator)
+    head = requirement_part[:operator_index]
+    tail = requirement_part[operator_index:].replace(old_version, new_version, 1)
+
+    return f"{head}{tail}{separator}{marker}"
