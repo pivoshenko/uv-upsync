@@ -54,8 +54,12 @@ preserving your formatting, comments, operators, extras and environment markers.
   your project via `[[tool.uv.index]]`, so private indexes work out of the box
 - **Correct by construction** — specifiers are parsed with [`packaging`], the
   canonical PEP 440/508 implementation, not regular expressions
-- **Conservative** — only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`),
-  capped (`<`, `<=`) and excluded (`!=`) constraints are left untouched
+- **Conservative** — only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`)
+  requirements are never touched
+- **Range-aware** — compound specifiers like `>=1.2,<2.0` have their floor raised
+  to the latest version that still satisfies the cap (`<2.0`) and any exclusions (`!=`)
+- **Controlled** — `--max-bump patch|minor|major` holds back larger jumps (auto-apply
+  minors, review majors), and `--prerelease` opts into pre-release versions
 - **Format-preserving** — only the version token is rewritten; everything else,
   including comments and markers, is kept verbatim
 - **Fast** — version lookups are fetched concurrently and cached
@@ -111,6 +115,8 @@ Audited 12 dependencies, all up to date
 | `--exclude <PKG>` | Package(s) to exclude from upgrading |
 | `--group <NAME>` | Upgrade dependencies in the given group(s) only |
 | `--all-groups` | Upgrade dependencies in all groups |
+| `--max-bump <level>` | Limit upgrades to at most `patch`, `minor`, or `major` |
+| `--prerelease` | Allow upgrading to pre-release versions |
 | `--index-url <URL>` | Base URL of the [PEP 691] package index (defaults to the project's uv index or PyPI) |
 | `--offline` | Disable network access, using only cached data |
 | `-n`, `--no-cache` | Avoid reading from or writing to the cache |
@@ -157,6 +163,8 @@ exclude = ["click", "ruff"]               # never upgrade these packages
 group = ["project", "test"]               # only these groups (omit for all)
 upgrade-package = ["httpx"]               # only these packages
 all-groups = true                         # upgrade every group
+max-bump = "minor"                        # hold back major upgrades
+prerelease = false                        # allow pre-release versions
 index-url = "https://example.com/simple"  # PEP 691 index to query
 ```
 
