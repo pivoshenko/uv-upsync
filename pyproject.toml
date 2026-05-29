@@ -20,7 +20,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-dependencies = ["click~=8.1.8", "httpx~=0.28.1", "tomlkit~=0.13.3"]
+dependencies = ["click~=8.1.8", "httpx~=0.28.1", "packaging~=24.2", "tomlkit~=0.13.3"]
 description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 keywords = [
   "cli",
@@ -109,7 +109,7 @@ lines-between-types = 1
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["INP001", "PLR2004", "S101"]
+"tests/*.py" = ["INP001", "PLR2004", "S101", "SLF001"]
 
 [tool.semantic_release]
 changelog_file = "CHANGELOG.md"

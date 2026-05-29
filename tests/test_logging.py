@@ -21,91 +21,110 @@ def test_logger_is_singleton() -> None:
 
 def test_logger_singleton_reset() -> None:
     logger1 = logging.Logger()
-    logging.Logger._instance = None  # noqa: SLF001
+    logging.Logger._instance = None
     logger2 = logging.Logger()
-
     assert logger1 is not logger2
 
 
-@pytest.mark.parametrize(
-    ("log_method", "message", "expected_color"),
-    [
-        ("info", "Information message", "green"),
-        ("warning", "Warning message", "yellow"),
-        ("error", "Error message", "red"),
-    ],
-)
-def test_logger_methods(
-    mocker: MockerFixture,
-    log_method: str,
-    message: str,
-    expected_color: str,
-) -> None:
+def test_configure_sets_state() -> None:
+    logger = logging.Logger()
+    logger.configure(quiet=True, verbose=True, color=False)
+
+    assert logger.quiet is True
+    assert logger.verbose is True
+    assert logger.color is False
+
+
+def test_status_outputs_verb_and_message(mocker: MockerFixture) -> None:
     mock_echo = mocker.patch("click.echo")
-    mock_style = mocker.patch("click.style", return_value=f"styled_{message}")
 
     logger = logging.Logger()
-    getattr(logger, log_method)(message)
+    logger.status("Resolved", "7 packages in 12ms")
 
-    mock_style.assert_called_once()
-    assert mock_style.call_args[0][0] == message
-    assert "fg" in mock_style.call_args[1]
-    assert mock_style.call_args[1]["fg"] == expected_color
-    mock_echo.assert_called_once_with(f"styled_{message}")
-
-
-def test_logger_exception_method(mocker: MockerFixture) -> None:
-    mock_echo = mocker.patch("click.echo")
-    mock_style = mocker.patch("click.style", side_effect=lambda x, **kwargs: f"styled_{x}")  # noqa: ARG005
-
-    logger = logging.Logger()
-    test_exception = ValueError("Test error")
-    logger.exception("Error occurred", test_exception)
-
-    assert mock_echo.call_count == 2
-    assert mock_style.call_count == 2
-
-
-def test_logger_warning_styling(mocker: MockerFixture) -> None:
-    mock_echo = mocker.patch("click.echo")
-    mock_style = mocker.patch("click.style", return_value="styled_message")
-
-    logger = logging.Logger()
-    logger.warning("Warning message")
-
-    mock_style.assert_called_once_with("Warning message", fg="yellow", dim=True)
     mock_echo.assert_called_once()
+    message = mock_echo.call_args[0][0]
+    assert "Resolved" in message
+    assert "7 packages in 12ms" in message
 
 
-def test_logger_error_styling(mocker: MockerFixture) -> None:
+def test_status_suppressed_when_quiet(mocker: MockerFixture) -> None:
     mock_echo = mocker.patch("click.echo")
-    mock_style = mocker.patch("click.style", return_value="styled_message")
 
     logger = logging.Logger()
-    logger.error("Error message")
+    logger.configure(quiet=True)
+    logger.status("Resolved", "nothing")
 
-    mock_style.assert_called_once_with("Error message", fg="red", bold=True)
-    mock_echo.assert_called_once()
+    mock_echo.assert_not_called()
+
+
+def test_update_renders_version_diff(mocker: MockerFixture) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    logger.update("httpx", "0.27.0", "0.28.1")
+
+    message = mock_echo.call_args[0][0]
+    assert "Updated" in message
+    assert "v0.27.0" in message
+    assert "v0.28.1" in message
+
+
+def test_update_suppressed_when_quiet(mocker: MockerFixture) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    logger.configure(quiet=True)
+    logger.update("httpx", "0.27.0", "0.28.1")
+
+    mock_echo.assert_not_called()
 
 
 @pytest.mark.parametrize(
-    ("method_name", "args"),
+    ("quiet", "verbose", "expected_calls"),
     [
-        ("info", ("test message",)),
-        ("warning", ("test message",)),
-        ("error", ("test message",)),
-        ("exception", ("test message", Exception("error"))),
+        (False, False, 0),
+        (False, True, 1),
+        (True, True, 0),
     ],
 )
-def test_all_logger_methods_call_log(
+def test_skip_requires_verbose(
     mocker: MockerFixture,
-    method_name: str,
-    args: tuple[str, ...],
+    *,
+    quiet: bool,
+    verbose: bool,
+    expected_calls: int,
 ) -> None:
     mock_echo = mocker.patch("click.echo")
-    mocker.patch("click.style", return_value="styled")
 
     logger = logging.Logger()
-    getattr(logger, method_name)(*args)
+    logger.configure(quiet=quiet, verbose=verbose)
+    logger.skip("Skipping something")
 
-    assert mock_echo.called
+    assert mock_echo.call_count == expected_calls
+
+
+@pytest.mark.parametrize(("method", "prefix"), [("warning", "warning:"), ("error", "error:")])
+def test_warning_and_error_go_to_stderr(
+    mocker: MockerFixture,
+    method: str,
+    prefix: str,
+) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    getattr(logger, method)("something happened")
+
+    message = mock_echo.call_args[0][0]
+    assert prefix in message
+    assert "something happened" in message
+    assert mock_echo.call_args[1]["err"] is True
+
+
+def test_echo_passes_configured_color(mocker: MockerFixture) -> None:
+    mock_echo = mocker.patch("click.echo")
+
+    logger = logging.Logger()
+    logger.configure(color=True)
+    logger.status("Resolved", "x")
+
+    assert mock_echo.call_args[1]["color"] is True

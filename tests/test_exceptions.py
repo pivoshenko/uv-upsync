@@ -11,9 +11,6 @@ from uv_upsync import exceptions
     "exception_class",
     [
         exceptions.BaseError,
-        exceptions.InvalidDependencySpecifierError,
-        exceptions.NoOperatorFoundError,
-        exceptions.MultipleOperatorsFoundError,
         exceptions.UVCommandError,
     ],
 )
@@ -23,56 +20,6 @@ def test_exceptions_inherit_from_base_error(exception_class: type[exceptions.Bas
 
 def test_base_error_is_exception() -> None:
     assert issubclass(exceptions.BaseError, Exception)
-
-
-@pytest.mark.parametrize(
-    ("dependency_specifier", "expected_message"),
-    [
-        ("invalid^1.0.0", "Invalid dependency specifier: 'invalid^1.0.0'"),
-        ("package@latest", "Invalid dependency specifier: 'package@latest'"),
-        ("pkg:1.0.0", "Invalid dependency specifier: 'pkg:1.0.0'"),
-    ],
-)
-def test_invalid_dependency_specifier_error(
-    dependency_specifier: str,
-    expected_message: str,
-) -> None:
-    error = exceptions.InvalidDependencySpecifierError(dependency_specifier)
-    assert str(error) == expected_message
-
-
-@pytest.mark.parametrize(
-    ("dependency_specifier", "expected_message"),
-    [
-        ("package", "No operator found in dependency specifier: 'package'"),
-        ("some-pkg", "No operator found in dependency specifier: 'some-pkg'"),
-        ("another_package", "No operator found in dependency specifier: 'another_package'"),
-    ],
-)
-def test_no_operator_found_error(dependency_specifier: str, expected_message: str) -> None:
-    error = exceptions.NoOperatorFoundError(dependency_specifier)
-    assert str(error) == expected_message
-
-
-@pytest.mark.parametrize(
-    ("dependency_specifier", "expected_message"),
-    [
-        (
-            "package>=1.0,<2.0",
-            "Multiple operators found in dependency specifier: 'package>=1.0,<2.0'",
-        ),
-        (
-            "pkg>=1.0,<=2.0",
-            "Multiple operators found in dependency specifier: 'pkg>=1.0,<=2.0'",
-        ),
-    ],
-)
-def test_multiple_operators_found_error(
-    dependency_specifier: str,
-    expected_message: str,
-) -> None:
-    error = exceptions.MultipleOperatorsFoundError(dependency_specifier)
-    assert str(error) == expected_message
 
 
 @pytest.mark.parametrize(
@@ -103,7 +50,6 @@ def test_uv_command_error(
     if stdout:
         assert "Stdout:" in error_message
         assert stdout in error_message
-
     if stderr:
         assert "Stderr:" in error_message
         assert stderr in error_message

@@ -4,24 +4,7 @@ from __future__ import annotations
 
 
 class BaseError(Exception):
-    pass
-
-
-class InvalidDependencySpecifierError(BaseError):
-    def __init__(self, dependency_specifier: str) -> None:
-        super().__init__(f"Invalid dependency specifier: {dependency_specifier!r}")
-
-
-class NoOperatorFoundError(BaseError):
-    def __init__(self, dependency_specifier: str) -> None:
-        super().__init__(f"No operator found in dependency specifier: {dependency_specifier!r}")
-
-
-class MultipleOperatorsFoundError(BaseError):
-    def __init__(self, dependency_specifier: str) -> None:
-        super().__init__(
-            f"Multiple operators found in dependency specifier: {dependency_specifier!r}",
-        )
+    """Base class for all uv-upsync errors."""
 
 
 class UVCommandError(BaseError):
