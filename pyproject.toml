@@ -23,27 +23,19 @@ classifiers = [
 dependencies = ["click~=8.1.8", "httpx~=0.28.1", "packaging~=26.2", "tomlkit~=0.13.3"]
 description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 keywords = [
-  "cli",
-  "cli-tool",
-  "cli-tools",
-  "cross-platform",
   "dependencies",
   "dependencies-management",
   "dependencies-update",
-  "dependencies-upgrade",
-  "dependency",
   "hacktoberfest",
   "packaging",
   "packaging-management",
   "packaging-update",
-  "packaging-upgrade",
-  "plugin",
-  "plugins",
   "pypi",
   "python",
   "uv",
   "uv-plugin",
-  "uv-plugins"
+  "uv-plugins",
+  "uv-tool"
 ]
 license = "MIT"
 maintainers = [{ "name" = "Volodymyr Pivoshenko", "email" = "contact@pivoshenko.dev" }]
