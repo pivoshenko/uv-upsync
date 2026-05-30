@@ -39,16 +39,6 @@
   <img alt="demo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/demo.gif?raw=true">
 </div>
 
-## Contents
-
-- [Overview](#overview)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Examples](#examples)
-- [Pre-commit](#pre-commit)
-- [GitHub Action](#github-action)
-
 ## Overview
 
 `uv-upsync` is a [uv]-native tool for automated dependency updates and version
