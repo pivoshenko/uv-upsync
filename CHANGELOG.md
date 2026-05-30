@@ -2,6 +2,85 @@
 
 <!-- version list -->
 
+## v2.4.0 (2026-05-30)
+
+### Bug Fixes
+
+- Replace singleton metaclass with __new__-based singleton
+  ([`53b7737`](https://github.com/pivoshenko/uv-upsync/commit/53b77372e484a3695f5bbac0cb4abfaf58821a39))
+
+- **ci**: Configure ty python-version to match ruff target
+  ([`1cc34f1`](https://github.com/pivoshenko/uv-upsync/commit/1cc34f10645df6885c484aeb844d9cf25defdace))
+
+### Build System
+
+- Bump pytest to 9.0.3 to fix GHSA-6w46-j5rx-g56g
+  ([`4479cf6`](https://github.com/pivoshenko/uv-upsync/commit/4479cf679006e7fd3224221441dc70eb29e41865))
+
+- Drop unused pytest-lazy-fixture (incompatible with pytest 9)
+  ([`fe3176a`](https://github.com/pivoshenko/uv-upsync/commit/fe3176a69c5d86f67324fadd60500e6249dcc3b1))
+
+- Update dev dependencies
+  ([`b0813fa`](https://github.com/pivoshenko/uv-upsync/commit/b0813fa8191f364761833cb5f83c22fad71af146))
+
+- Update dev dependencies
+  ([`5ef0fe5`](https://github.com/pivoshenko/uv-upsync/commit/5ef0fe5b9eb2f7c77a5218c4a979667e7f9a5021))
+
+- Update dev dependencies
+  ([`dd39a19`](https://github.com/pivoshenko/uv-upsync/commit/dd39a191d129b9a712bb674b1b73a5630c997fc7))
+
+- Update dev dependencies
+  ([`dcd9ed7`](https://github.com/pivoshenko/uv-upsync/commit/dcd9ed7c4d66e55b714b00835030d81d9f8554b5))
+
+- Update dev dependencies
+  ([`2b8bb0b`](https://github.com/pivoshenko/uv-upsync/commit/2b8bb0bb732d7d8dd1b478e0db01a6e5055f94bf))
+
+### Chores
+
+- Align pyproject keywords with github repository topics
+  ([`2f420db`](https://github.com/pivoshenko/uv-upsync/commit/2f420db49e3c0c4f4c4c3e8604eef2088026885f))
+
+- Keep dependencies-upgrade and packaging-upgrade keywords
+  ([`9140317`](https://github.com/pivoshenko/uv-upsync/commit/9140317c0bdcf042620338153547d925547d14ac))
+
+### Documentation
+
+- Clearer tagline
+  ([`d445a73`](https://github.com/pivoshenko/uv-upsync/commit/d445a73bf570082606f3ba43100d1ddae170d775))
+
+- Drop manual table of contents in favor of github's built-in
+  ([`aa5c0a6`](https://github.com/pivoshenko/uv-upsync/commit/aa5c0a60fb2c7d27db40de3238a79a5cc452826e))
+
+- Note that examples can be run with uvx without installing
+  ([`a6c20a8`](https://github.com/pivoshenko/uv-upsync/commit/a6c20a8a7ec33e1872c5d4e801953a5a868bc4a7))
+
+- Reorder badges, add table of contents, simplify overview
+  ([`88b5592`](https://github.com/pivoshenko/uv-upsync/commit/88b55923883e530d11827e32243598bc8a85c100))
+
+### Features
+
+- Add --format json/markdown output and expose it from the action
+  ([`618bb44`](https://github.com/pivoshenko/uv-upsync/commit/618bb44faf66554c4dce817f284ba096caf2a7d8))
+
+- Add [tool.uv-upsync] config, pre-commit hook, and GitHub Action
+  ([`9d718a9`](https://github.com/pivoshenko/uv-upsync/commit/9d718a9573cec997bb5826e2ea4c9c4cd747b075))
+
+- Align uv-upsync with the uv ecosystem
+  ([`3557c71`](https://github.com/pivoshenko/uv-upsync/commit/3557c71a9163f35abb57f25d7897ced593bdc888))
+
+- Best-effort resolution that isolates un-lockable upgrades
+  ([`2e5bfc8`](https://github.com/pivoshenko/uv-upsync/commit/2e5bfc8a68b1708c1339dfb08f88ead5f0fada72))
+
+- Render failures as uv-style errors instead of tracebacks
+  ([`7ad19d6`](https://github.com/pivoshenko/uv-upsync/commit/7ad19d6f07762385b5b8f834cd1e7623eb0e42fa))
+
+- Resolver-aware --resolve, conflict naming, and a VHS demo
+  ([`07ad6fd`](https://github.com/pivoshenko/uv-upsync/commit/07ad6fd3600d3836a4b484e7422de221eb2a9d31))
+
+- Support compound ranges, --max-bump, and --prerelease
+  ([`973e8fa`](https://github.com/pivoshenko/uv-upsync/commit/973e8fa351d743a7dd9c1d577fdd5dc835789445))
+
+
 ## v2.3.2 (2026-03-29)
 
 ### Chores
