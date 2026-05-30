@@ -5,17 +5,17 @@
 <br>
 
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT">
-    <img alt="License" src="https://img.shields.io/pypi/l/uv-upsync?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0A6847&label=License">
+  <a href="https://pypi.org/project/uv-upsync">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-upsync?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
   </a>
   <a href="https://pypi.org/project/uv-upsync">
     <img alt="Python" src="https://img.shields.io/pypi/pyversions/uv-upsync?style=flat-square&logo=python&logoColor=white&color=4856CD&label=Python">
   </a>
-  <a href="https://pypi.org/project/uv-upsync">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-upsync?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
-  </a>
   <a href="https://github.com/astral-sh/uv">
     <img alt="uv" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square&label=uv">
+  </a>
+  <a href="https://docs.astral.sh/ruff">
+    <img alt="Ruff" src="https://img.shields.io/badge/Style-ruff-black.svg?style=flat-square&logo=ruff&logoColor=white&color=D7FF64">
   </a>
   <a href="https://github.com/pivoshenko/uv-upsync/actions/workflows/ci.yaml">
     <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-upsync/ci.yaml?label=CI&style=flat-square&logo=githubactions&logoColor=white&color=0A6847">
@@ -23,8 +23,8 @@
   <a href="https://codecov.io/gh/pivoshenko/uv-upsync">
     <img alt="Coverage" src="https://img.shields.io/codecov/c/gh/pivoshenko/uv-upsync?token=cqRQxVnDR6&style=flat-square&logo=codecov&logoColor=white&color=0A6847&label=Coverage">
   </a>
-  <a href="https://docs.astral.sh/ruff">
-    <img alt="Ruff" src="https://img.shields.io/badge/Style-ruff-black.svg?style=flat-square&logo=ruff&logoColor=white&color=D7FF64">
+  <a href="https://opensource.org/licenses/MIT">
+    <img alt="License" src="https://img.shields.io/pypi/l/uv-upsync?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0A6847&label=License">
   </a>
   <a href="https://stand-with-ukraine.pp.ua">
     <img alt="StandWithUkraine" src="https://img.shields.io/badge/Support-Ukraine-FFC93C?style=flat-square&labelColor=07689F">
@@ -39,15 +39,28 @@
   <img alt="demo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/demo.gif?raw=true">
 </div>
 
+## Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Examples](#examples)
+- [Pre-commit](#pre-commit)
+- [GitHub Action](#github-action)
+
 ## Overview
 
-`uv-upsync` is `uv lock --upgrade` for the version specifiers you actually write.
+`uv-upsync` is a [uv]-native tool for automated dependency updates and version
+bumping in `pyproject.toml`.
 
 `uv lock --upgrade` refreshes your **lockfile** but leaves the lower bounds in
 `pyproject.toml` untouched, so `httpx>=0.24.0` stays `>=0.24.0` forever.
 `uv-upsync` raises those human-authored bounds to the latest published version,
 re-locks with `uv`, and rolls back if the resolution fails — all while
 preserving your formatting, comments, operators, extras and environment markers.
+
+[uv]: https://github.com/astral-sh/uv
 
 ### Features
 
