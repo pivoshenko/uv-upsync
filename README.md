@@ -32,7 +32,7 @@
 </p>
 
 <p align="center">
-  <em><code>uv lock --upgrade</code> for the version specifiers you actually write.</em>
+  <em>Automated dependency upgrades for <code>pyproject.toml</code>, native to uv.</em>
 </p>
 
 <div align="center">
