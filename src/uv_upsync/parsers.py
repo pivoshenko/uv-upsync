@@ -1,4 +1,5 @@
-"""Module that contains the TOML parsing and version-bumping logic.
+"""
+Module that contains the TOML parsing and version-bumping logic.
 
 Dependency specifiers are parsed with `packaging` (the canonical PEP 440/508
 implementation) for correctness, while the actual rewrite is a surgical
@@ -65,7 +66,8 @@ def iter_dependency_groups(
     *,
     all_groups: bool = False,
 ) -> Iterator[tuple[str, items.Array]]:
-    """Yield `(label, array)` for every selected dependency list in the document.
+    """
+    Yield `(label, array)` for every selected dependency list in the document.
 
     The yielded arrays are the live tomlkit objects, so mutating them in place
     updates the underlying document while preserving formatting and comments.
@@ -106,7 +108,8 @@ def parse_requirement(specifier: str) -> Requirement | None:
 
 
 def upgradable_specifier(requirement: Requirement) -> tuple[Specifier, SpecifierSet] | None:
-    """Return the raisable lower-bound clause and the residual constraints, or `None`.
+    """
+    Return the raisable lower-bound clause and the residual constraints, or `None`.
 
     Compound specifiers such as `>=1.0,<2.0` are supported: the single lower-bound
     clause is the one we raise, while the remaining clauses (caps, exclusions) are
@@ -160,7 +163,8 @@ def eligible_versions(
     allow_prerelease: bool = False,
     max_bump: str | None = None,
 ) -> list[str]:
-    """Return, ascending, every version `update` could be bumped to under the policies.
+    """
+    Return, ascending, every version `update` could be bumped to under the policies.
 
     Used by the resolver-aware search to look for a lower version that locks when the
     latest does not.
