@@ -1,74 +1,43 @@
-<div align="center">
-  <img alt="logo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/logo.svg?raw=True" height=200>
-</div>
+<h1 align="left">
+  <img src="assets/logo.svg" alt="" height="40" align="left" style="vertical-align: middle; margin-right: 12px;">
+  uv-upsync
+</h1>
 
-<br>
-
-<p align="center">
-  <a href="https://pypi.org/project/uv-upsync">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-upsync?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
-  </a>
+<p align="left">
   <a href="https://pypi.org/project/uv-upsync">
     <img alt="Python" src="https://img.shields.io/pypi/pyversions/uv-upsync?style=flat-square&logo=python&logoColor=white&color=4856CD&label=Python">
   </a>
-  <a href="https://github.com/astral-sh/uv">
-    <img alt="uv" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square&label=uv">
-  </a>
-  <a href="https://docs.astral.sh/ruff">
-    <img alt="Ruff" src="https://img.shields.io/badge/Style-ruff-black.svg?style=flat-square&logo=ruff&logoColor=white&color=D7FF64">
+  <a href="https://pypi.org/project/uv-upsync">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/uv-upsync?style=flat-square&logo=pypi&logoColor=white&color=4856CD&label=PyPI">
   </a>
   <a href="https://github.com/pivoshenko/uv-upsync/actions/workflows/ci.yaml">
     <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pivoshenko/uv-upsync/ci.yaml?label=CI&style=flat-square&logo=githubactions&logoColor=white&color=0A6847">
   </a>
-  <a href="https://codecov.io/gh/pivoshenko/uv-upsync">
-    <img alt="Coverage" src="https://img.shields.io/codecov/c/gh/pivoshenko/uv-upsync?token=cqRQxVnDR6&style=flat-square&logo=codecov&logoColor=white&color=0A6847&label=Coverage">
-  </a>
-  <a href="https://opensource.org/licenses/MIT">
-    <img alt="License" src="https://img.shields.io/pypi/l/uv-upsync?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0A6847&label=License">
+  <a href="https://docs.astral.sh/ruff">
+    <img alt="Ruff" src="https://img.shields.io/badge/Style-ruff-black.svg?style=flat-square&logo=ruff&logoColor=white&color=D7FF64">
   </a>
   <a href="https://stand-with-ukraine.pp.ua">
     <img alt="StandWithUkraine" src="https://img.shields.io/badge/Support-Ukraine-FFC93C?style=flat-square&labelColor=07689F">
   </a>
 </p>
 
-<p align="center">
-  <em>Automated dependency upgrades for <code>pyproject.toml</code>, native to uv.</em>
-</p>
-
-<div align="center">
-  <img alt="demo" src="https://github.com/pivoshenko/uv-upsync/blob/main/assets/demo.gif?raw=true">
-</div>
-
 ## Overview
 
-`uv-upsync` is a [uv]-native tool for automated dependency updates and version
-bumping in `pyproject.toml`.
+`uv-upsync` is a [uv]-native tool for automated dependency updates and version bumping in `pyproject.toml`.
 
-`uv lock --upgrade` refreshes your **lockfile** but leaves the lower bounds in
-`pyproject.toml` untouched, so `httpx>=0.24.0` stays `>=0.24.0` forever.
-`uv-upsync` raises those human-authored bounds to the latest published version,
-re-locks with `uv`, and rolls back if the resolution fails — all while
-preserving your formatting, comments, operators, extras and environment markers.
+`uv lock --upgrade` refreshes your **lockfile** but leaves the lower bounds in `pyproject.toml` untouched, so `httpx>=0.24.0` stays `>=0.24.0` forever. `uv-upsync` raises those human-authored bounds to the latest published version, re-locks with `uv`, and rolls back if the resolution fails — all while preserving your formatting, comments, operators, extras and environment markers.
 
 [uv]: https://github.com/astral-sh/uv
 
 ### Features
 
-- **Built for the uv ecosystem** — familiar flags (`--project`, `--upgrade-package`,
-  `--all-groups`, `--offline`, `--no-cache`, `--color`), uv-style output and a
-  `uv lock` round-trip with automatic rollback on failure
-- **Index-aware** — resolves versions from the [PEP 691] index configured for
-  your project via `[[tool.uv.index]]`, so private indexes work out of the box
-- **Correct by construction** — specifiers are parsed with [`packaging`], the
-  canonical PEP 440/508 implementation, not regular expressions
-- **Conservative** — only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`)
-  requirements are never touched
-- **Range-aware** — compound specifiers like `>=1.2,<2.0` have their floor raised
-  to the latest version that still satisfies the cap (`<2.0`) and any exclusions (`!=`)
-- **Controlled** — `--max-bump patch|minor|major` holds back larger jumps (auto-apply
-  minors, review majors), and `--prerelease` opts into pre-release versions
-- **Format-preserving** — only the version token is rewritten; everything else,
-  including comments and markers, is kept verbatim
+- **Built for the uv ecosystem** — familiar flags (`--project`, `--upgrade-package`, `--all-groups`, `--offline`, `--no-cache`, `--color`), uv-style output and a `uv lock` round-trip with automatic rollback on failure
+- **Index-aware** — resolves versions from the [PEP 691] index configured for your project via `[[tool.uv.index]]`, so private indexes work out of the box
+- **Correct by construction** — specifiers are parsed with [`packaging`], the canonical PEP 440/508 implementation, not regular expressions
+- **Conservative** — only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`) requirements are never touched
+- **Range-aware** — compound specifiers like `>=1.2,<2.0` have their floor raised to the latest version that still satisfies the cap (`<2.0`) and any exclusions (`!=`)
+- **Controlled** — `--max-bump patch|minor|major` holds back larger jumps (auto-apply minors, review majors), and `--prerelease` opts into pre-release versions
+- **Format-preserving** — only the version token is rewritten; everything else, including comments and markers, is kept verbatim
 - **Fast** — version lookups are fetched concurrently and cached
 - **Selective** — target specific groups or packages, or exclude packages
 - **Configurable** — persist defaults in a `[tool.uv-upsync]` table, overridable per run
@@ -93,11 +62,9 @@ uv add --dev uv-upsync
 
 ## Usage
 
-> The examples below assume `uv-upsync` is installed. If it isn't, prefix any
-> command with `uvx` to run it without installing (e.g. `uvx uv-upsync --dry-run`).
+> The examples below assume `uv-upsync` is installed. If it isn't, prefix any command with `uvx` to run it without installing (e.g. `uvx uv-upsync --dry-run`).
 
-By default, `uv-upsync` upgrades every dependency in the `pyproject.toml` found
-in the current directory:
+By default, `uv-upsync` upgrades every dependency in the `pyproject.toml` found in the current directory:
 
 ```shell
 $ uv-upsync
@@ -118,40 +85,35 @@ Audited 12 dependencies, all up to date
 
 ### Options
 
-| Option | Description |
-| --- | --- |
-| `--project <DIR>` | Path to the project directory containing the `pyproject.toml` |
-| `--directory <DIR>` | Change to `DIR` before running |
-| `-P`, `--upgrade-package <PKG>` | Allow upgrades for only the given package(s) |
-| `--exclude <PKG>` | Package(s) to exclude from upgrading |
-| `--group <NAME>` | Upgrade dependencies in the given group(s) only |
-| `--all-groups` | Upgrade dependencies in all groups |
-| `--max-bump <level>` | Limit upgrades to at most `patch`, `minor`, or `major` |
-| `--prerelease` | Allow upgrading to pre-release versions |
-| `--index-url <URL>` | Base URL of the [PEP 691] package index (defaults to the project's uv index or PyPI) |
-| `--offline` | Disable network access, using only cached data |
-| `-n`, `--no-cache` | Avoid reading from or writing to the cache |
-| `--dry-run` | Preview the upgrades without writing to `pyproject.toml` |
-| `--check` | Exit with a non-zero status if any upgrades are available |
-| `--strict` | Roll back every upgrade and fail if the result does not lock |
-| `--no-lock` | Write the upgrades without running `uv lock` |
-| `--resolve` | When an upgrade does not lock, bump to the latest version that does |
-| `-q`, `--quiet` | Use quiet output |
-| `-v`, `--verbose` | Use verbose output (shows skipped dependencies) |
-| `--format <text\|json\|markdown>` | Output format for the upgrade summary |
-| `--color <auto\|always\|never>` | Control the use of color in output |
-| `-V`, `--version` | Show the version and exit |
+| Option                            | Description                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `--project <DIR>`                 | Path to the project directory containing the `pyproject.toml`                        |
+| `--directory <DIR>`               | Change to `DIR` before running                                                       |
+| `-P`, `--upgrade-package <PKG>`   | Allow upgrades for only the given package(s)                                         |
+| `--exclude <PKG>`                 | Package(s) to exclude from upgrading                                                 |
+| `--group <NAME>`                  | Upgrade dependencies in the given group(s) only                                      |
+| `--all-groups`                    | Upgrade dependencies in all groups                                                   |
+| `--max-bump <level>`              | Limit upgrades to at most `patch`, `minor`, or `major`                               |
+| `--prerelease`                    | Allow upgrading to pre-release versions                                              |
+| `--index-url <URL>`               | Base URL of the [PEP 691] package index (defaults to the project's uv index or PyPI) |
+| `--offline`                       | Disable network access, using only cached data                                       |
+| `-n`, `--no-cache`                | Avoid reading from or writing to the cache                                           |
+| `--dry-run`                       | Preview the upgrades without writing to `pyproject.toml`                             |
+| `--check`                         | Exit with a non-zero status if any upgrades are available                            |
+| `--strict`                        | Roll back every upgrade and fail if the result does not lock                         |
+| `--no-lock`                       | Write the upgrades without running `uv lock`                                         |
+| `--resolve`                       | When an upgrade does not lock, bump to the latest version that does                  |
+| `-q`, `--quiet`                   | Use quiet output                                                                     |
+| `-v`, `--verbose`                 | Use verbose output (shows skipped dependencies)                                      |
+| `--format <text\|json\|markdown>` | Output format for the upgrade summary                                                |
+| `--color <auto\|always\|never>`   | Control the use of color in output                                                   |
+| `-V`, `--version`                 | Show the version and exit                                                            |
 
-`uv-upsync` understands all three dependency tables: `project.dependencies`,
-`project.optional-dependencies`, and `dependency-groups` ([PEP 735]).
+`uv-upsync` understands all three dependency tables: `project.dependencies`, `project.optional-dependencies`, and `dependency-groups` ([PEP 735]).
 
 ### Resolution
 
-After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined
-upgrade does not resolve, the default **best-effort** mode keeps the largest
-subset of upgrades that locks and reports which ones were held back (naming the
-conflicting dependency when it can) — so a single incompatible dependency never
-costs you the rest:
+After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined upgrade does not resolve, the default **best-effort** mode keeps the largest subset of upgrades that locks and reports which ones were held back (naming the conflicting dependency when it can) — so a single incompatible dependency never costs you the rest:
 
 ```console
 $ uv-upsync
@@ -162,8 +124,7 @@ warning: Held back docutils v0.16 -> v0.23 (conflicts with sphinx)
 Locked dependencies
 ```
 
-With `--resolve`, an upgrade that does not lock at its latest version is bisected
-for the **latest version that does**, instead of being held back entirely:
+With `--resolve`, an upgrade that does not lock at its latest version is bisected for the **latest version that does**, instead of being held back entirely:
 
 ```console
 $ uv-upsync --resolve
@@ -173,14 +134,11 @@ Updated 2 dependencies in pyproject.toml
 Locked dependencies
 ```
 
-Use `--strict` to instead roll back every upgrade and fail (exit code `2`) if the
-result does not lock, or `--no-lock` to write the upgrades and skip locking
-entirely.
+Use `--strict` to instead roll back every upgrade and fail (exit code `2`) if the result does not lock, or `--no-lock` to write the upgrades and skip locking entirely.
 
 ## Configuration
 
-`uv-upsync` reads defaults from a `[tool.uv-upsync]` table in your
-`pyproject.toml`, so you don't have to repeat them on every run:
+`uv-upsync` reads defaults from a `[tool.uv-upsync]` table in your `pyproject.toml`, so you don't have to repeat them on every run:
 
 ```toml
 [tool.uv-upsync]
@@ -194,10 +152,7 @@ resolve = false                           # bisect for the latest version that l
 index-url = "https://example.com/simple"  # PEP 691 index to query
 ```
 
-Settings are resolved with the precedence **command line > `[tool.uv-upsync]` >
-defaults**: passing a flag always overrides the matching setting. The index is
-resolved as `--index-url` > `[tool.uv-upsync].index-url` > `[[tool.uv.index]]` >
-PyPI.
+Settings are resolved with the precedence **command line > `[tool.uv-upsync]` > defaults**: passing a flag always overrides the matching setting. The index is resolved as `--index-url` > `[tool.uv-upsync].index-url` > `[[tool.uv.index]]` > PyPI.
 
 ## Examples
 
@@ -235,8 +190,7 @@ uv-upsync --group test --group docs
 uv-upsync --check
 ```
 
-`--check` writes nothing and exits with a non-zero status when upgrades are
-available, which makes it easy to wire into a scheduled job or pre-merge gate.
+`--check` writes nothing and exits with a non-zero status when upgrades are available, which makes it easy to wire into a scheduled job or pre-merge gate.
 
 ## Pre-commit
 
@@ -252,10 +206,8 @@ repos:
 
 Two hooks are available:
 
-- **`uv-upsync`** — upgrade the bounds in `pyproject.toml` and re-lock (runs
-  `uv lock`, so `uv` must be on your `PATH`)
-- **`uv-upsync-check`** — fail the commit if any dependency can be upgraded,
-  without writing changes
+- **`uv-upsync`** — upgrade the bounds in `pyproject.toml` and re-lock (runs `uv lock`, so `uv` must be on your `PATH`)
+- **`uv-upsync-check`** — fail the commit if any dependency can be upgraded, without writing changes
 
 ## GitHub Action
 
@@ -285,18 +237,16 @@ jobs:
           branch: build/uv-upsync
 ```
 
-With `--format markdown` the action's `summary` output is a ready-made pull
-request body (`⬆️ click 8.1.8 → 8.2.1 …`). To gate pull requests instead, run
-the action with `args: --check` and drop the pull request step.
+With `--format markdown` the action's `summary` output is a ready-made pull request body (`⬆️ click 8.1.8 → 8.2.1 …`). To gate pull requests instead, run the action with `args: --check` and drop the pull request step.
 
-| Input | Description | Default |
-| --- | --- | --- |
-| `args` | Additional arguments passed to `uv-upsync` | `""` |
-| `version` | Version of `uv-upsync` to run | latest |
-| `working-directory` | Directory to run in | `.` |
+| Input               | Description                                | Default |
+| ------------------- | ------------------------------------------ | ------- |
+| `args`              | Additional arguments passed to `uv-upsync` | `""`    |
+| `version`           | Version of `uv-upsync` to run              | latest  |
+| `working-directory` | Directory to run in                        | `.`     |
 
-| Output | Description |
-| --- | --- |
+| Output    | Description                                |
+| --------- | ------------------------------------------ |
 | `summary` | The upgrade summary printed by `uv-upsync` |
 
 [PEP 691]: https://peps.python.org/pep-0691
