@@ -2,5 +2,7 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version
 
-__version__ = "2.4.0"
+
+__version__ = version("uv-upsync")

@@ -14,13 +14,12 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.9",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-dependencies = ["click~=8.1.8", "httpx~=0.28.1", "packaging~=26.2", "tomlkit~=0.13.3"]
+dependencies = ["click~=8.4.1", "httpx~=0.28.1", "packaging~=26.2", "tomlkit~=0.15.0"]
 description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 keywords = [
   "dependencies",
@@ -58,23 +57,15 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [dependency-groups]
-ci = ["python-semantic-release~=10.5.3"]
 formatters = ["pyupgrade~=3.21.2", "ruff~=0.15.15"]
 linters = ["ruff~=0.15.15", "ty~=0.0.40"]
-tests = [
-  "coverage[toml]~=7.14.1",
-  "pytest-cov~=7.1.0",
-  "pytest-mock~=3.15.1",
-  "pytest-sugar~=1.1.1",
-  "pytest~=9.0.3",
-  "sh~=2.2.2"
-]
+tests = ["coverage[toml]~=7.14.1", "pytest~=9.0.3", "pytest-cov~=7.1.0", "pytest-mock~=3.15.1", "pytest-sugar~=1.1.1"]
 
 [tool.coverage.run]
-omit = ["*/__init__.py", "*/__main__.py"]
+omit = ["*/__init__.py"]
 
 [tool.pytest.ini_options]
-addopts = ["--basetemp=tests/fixtures", "--color=yes", "--cov-report=html", "--cov-report=xml", "--cov=src"]
+addopts = ["--color=yes", "--cov=src", "--cov-report=term-missing"]
 testpaths = ["tests"]
 
 [tool.ty.environment]
@@ -83,7 +74,6 @@ python-version = "3.13"
 [tool.ruff]
 fix = true
 line-length = 100
-target-version = "py313"
 unsafe-fixes = true
 
 [tool.ruff.format]
@@ -91,7 +81,7 @@ docstring-code-format = true
 quote-style = "double"
 
 [tool.ruff.lint]
-ignore = ["COM812", "D101", "D102", "D103", "D107", "D203", "D213", "G004", "PLE1205", "TRY003", "TRY400", "TRY401"]
+ignore = ["COM812", "D101", "D102", "D103", "D107", "D203", "D212", "G004", "PLE1205", "TRY003", "TRY400", "TRY401"]
 select = ["ALL"]
 
 [tool.ruff.lint.isort]
@@ -104,19 +94,3 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["INP001", "PLR2004", "S101", "SLF001"]
-
-[tool.semantic_release]
-changelog_file = "CHANGELOG.md"
-commit_author = "github-actions <github-actions@github.com>"
-exclude_commit_patterns = ["Merge pull request"]
-logging_use_named_masks = true
-version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/uv_upsync/__init__.py:__version__"]
-
-[tool.semantic_release.changelog]
-exclude_commit_patterns = ['''Initial Commit.*''', '''Merged? .*''', '''^\d+\.\d+\.\d+''']
-
-[tool.semantic_release.commit_parser_options]
-major_tags = ["feat"]
-minor_tags = ["fix", "perf", "refactor"]
-patch_tags = ["docs", "style"]
