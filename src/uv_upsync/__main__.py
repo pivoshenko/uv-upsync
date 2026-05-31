@@ -222,7 +222,7 @@ def cli(  # noqa: C901, PLR0913, PLR0915
         with filepath.open() as toml_file:
             pyproject = tomlkit.load(toml_file)
     except (OSError, TOMLKitError) as exception:
-        logger.error(f"Failed to read {filepath}", cause=exception)
+        logger.exception(f"Failed to read {filepath}", cause=exception)
         raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
     backup = copy.deepcopy(pyproject)
 
@@ -389,7 +389,8 @@ def _apply_with_lock(  # noqa: PLR0913
     allow_prerelease: bool,
     max_bump: str | None,
 ) -> tuple[list[parsers.Update], list[parsers.Update], dict[str, list[str]]]:
-    """Apply the upgrades and lock, returning the applied, held-back and conflict info.
+    """
+    Apply the upgrades and lock, returning the applied, held-back and conflict info.
 
     The full set is tried first (the common, fast path). On failure, `--strict`
     rolls everything back, while the default best-effort mode keeps the maximal
@@ -498,16 +499,16 @@ def main() -> None:
     try:
         exit_code = cli.main(standalone_mode=False)
     except click.exceptions.Abort as exception:
-        logger.error("operation cancelled")
+        logger.exception("operation cancelled")
         raise SystemExit(130) from exception
     except click.ClickException as exception:
-        logger.error(exception.format_message())
+        logger.exception(exception.format_message())
         raise SystemExit(exception.exit_code) from exception
     except exceptions.BaseError as exception:
-        logger.error(str(exception))
+        logger.exception(str(exception))
         raise SystemExit(ERROR_EXIT_CODE) from exception
     except Exception as exception:
-        logger.error(f"unexpected error: {exception}")
+        logger.exception(f"unexpected error: {exception}")
         if logger.verbose:
             raise
         raise SystemExit(ERROR_EXIT_CODE) from exception

@@ -60,6 +60,10 @@ class Logger:
     def warning(self, message: str) -> None:
         self._echo(f"{click.style('warning:', fg='yellow', bold=True)} {message}", err=True)
 
+    def exception(self, message: str, *, cause: object | None = None) -> None:
+        """Alias for `error`, used at exception-handling sites."""
+        self.error(message, cause=cause)
+
     def error(self, message: str, *, cause: object | None = None) -> None:
         self._echo(f"{click.style('error:', fg='red', bold=True)} {message}", err=True)
         if cause is None:

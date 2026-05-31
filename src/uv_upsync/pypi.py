@@ -1,4 +1,5 @@
-"""Module that contains a PyPI client that speaks the PEP 691 simple JSON API.
+"""
+Module that contains a PyPI client that speaks the PEP 691 simple JSON API.
 
 The client returns the full list of published versions for a set of packages
 from any PEP 691 compatible index. By default it talks to PyPI, but it honors
@@ -9,6 +10,8 @@ version to bump to (respecting caps, pre-release and bump policies) is left to
 """
 
 from __future__ import annotations
+
+import contextlib
 
 from concurrent import futures
 from typing import TYPE_CHECKING
@@ -126,8 +129,6 @@ class PyPIClient:
 
         versions: list[Version] = []
         for raw in payload.get("versions", []):
-            try:
+            with contextlib.suppress(InvalidVersion):
                 versions.append(Version(raw))
-            except InvalidVersion:
-                continue
         return sorted(versions)
