@@ -2,57 +2,59 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project
+## What this project is
 
-uv-upsync is a CLI tool for automated dependency updates and version bumping in `pyproject.toml` files. Think of it as `uv lock --upgrade` for the human-authored version specifiers: it raises the lower bounds in `pyproject.toml` to the latest published versions, then re-locks with `uv`. It is designed to feel native to the uv ecosystem — uv-style flags, output, and a `uv lock` round-trip with rollback on failure. Built with Click, httpx, tomlkit, and packaging.
+`uv-upsync` is a `uv`-native CLI that raises the **lower bounds** of dependency specifiers in `pyproject.toml` to the latest published versions, then re-runs `uv lock` and rolls back if resolution fails. It is **not** a lockfile updater — `uv lock --upgrade` already does that. `uv-upsync` rewrites the human-authored bounds (`httpx>=0.24.0` → `httpx>=0.28.1`) while preserving formatting, comments, operators, extras, and environment markers verbatim.
+
+The same code ships three ways: a PyPI package (`uvx uv-upsync`), a pre-commit hook (`.pre-commit-hooks.yaml`), and a composite GitHub Action (`action.yml`).
 
 ## Commands
 
-All commands use `uv run` (no virtual env activation needed). Task runner: `just`.
+All workflow lives in the `justfile`:
 
-```bash
-just format          # pyupgrade + ruff format
-just lint            # ty check + ruff check
-just test            # pytest with coverage
-just update          # uv lock --upgrade + uv-upsync
+- `just install` — `uv sync --all-groups --all-extras`
+- `just format` — `pyupgrade --py310-plus` over `src` and `tests`, then `ruff format`
+- `just lint` — `ty check .` and `ruff check .`
+- `just test` — `pytest .` (config in `pyproject.toml`; runs with `--cov=src`)
+- `just audit` — `uv audit`
+- `just check` — `lint` + `test` + `audit` (the CI gate)
+- `just update` — `uv lock --upgrade` then `uvx uv-upsync` (dogfoods itself)
 
-uv run pytest tests/test_parsers.py              # single test file
-uv run pytest tests/test_parsers.py::test_name   # single test
-uv run ruff check --no-fix .                     # lint without auto-fix
-uv run ty check .                                # type check
-```
+Single test: `uv run pytest tests/test_parsers.py::test_name -x`.
+
+`requires-python = ">=3.10"` but `[tool.ty.environment] python-version = "3.13"` — type-check target is 3.13 even though runtime support starts at 3.10. Don't use 3.11+-only syntax in runtime code.
 
 ## Architecture
 
-Entry point: `uv_upsync.__main__:main` (Click CLI).
+The CLI is a single Click command in `src/uv_upsync/__main__.py:cli` that orchestrates everything; the rest of the package is the pieces it composes. Read `__main__.py` first — the others make sense only as the components it calls.
 
-Source in `src/uv_upsync/` with clear separation:
+**Flow** (in `cli`):
 
-- **`__main__.py`** — uv-style Click CLI and orchestration. Resolves the target pyproject, collects upgradable package names across the selected groups, fetches latest versions concurrently, plans updates, then locks. Default is **best-effort**: try the full set, and on a lock failure keep the maximal subset that resolves (greedy), naming the conflicting peer (via `find_conflicts`) for held-back packages. `--resolve` bisects a held-back dependency's versions for the latest that locks; `--strict` rolls back everything and exits 2; `--no-lock` writes without locking. Supports `--check` (CI gate) and `--dry-run`
-- **`parsers.py`** — TOML iteration and version-bumping logic. Parses specifiers with `packaging` (`Requirement`/`Specifier`), not regex. `upgradable_specifier` returns the single raisable lower-bound clause plus a residual `SpecifierSet` (caps/exclusions), so compound ranges like `>=1.2,<2.0` are supported. `select_new_version` picks the highest version that beats the floor, satisfies the residual, and respects `--prerelease`/`--max-bump`. `plan_updates` computes a list of `Update`s (group label, index, new text) without mutating; `apply_updates` returns a deep-copied document with a chosen subset applied. Handles `project.dependencies`, `project.optional-dependencies`, `dependency-groups` (PEP 735). Only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`) requirements are never touched. `_replace_version` rewrites only the version token, preserving formatting, extras and markers. Inline tables (e.g. `include-group`) are ignored
-- **`pypi.py`** — `PyPIClient` querying the PEP 691 simple JSON API (`Accept: application/vnd.pypi.simple.v1+json`). Index-aware: `index_url_from_pyproject` reads `[[tool.uv.index]]` / `tool.uv.index-url`. Fetches concurrently (thread pool), caches in memory, supports `--offline`/`--no-cache`. Picks the highest stable version via `packaging.version`
-- **`report.py`** — Renders the applied/held-back updates as JSON or Markdown for `--format` (text output is handled by the logger). The GitHub Action exposes the Markdown as a `summary` output for PR bodies
-- **`uv.py`** — Subprocess wrapper for `uv lock` (accepts `cwd` and `--offline`)
-- **`config.py`** — Reads `[tool.uv-upsync]` from pyproject (`exclude`, `group`, `upgrade-package`, `all-groups`, `index-url`) with validation. CLI args take precedence over config, which takes precedence over defaults
-- **`commands.py`** — Custom Click command/formatter classes; help mirrors uv's clap layout (bold headers, cyan flags)
-- **`logging.py`** — Singleton logger with uv-style output: `status` (green verb), `update` (`Updated <name> v<old> -> v<new>`), `warning:`/`error:` prefixes to stderr (with dimmed `Caused by:` chains), verbose-only `skip`. Honors `--quiet`/`--verbose`/`--color`
-- **`exceptions.py`** — `BaseError` and `UVCommandError`
+1. **Config layering** — `config.load_config(pyproject)` reads `[tool.uv-upsync]`. Final precedence in `cli` is CLI flag > config > default; each option is `value = value or settings.value`.
+2. **Index resolution** — `pypi.index_url_from_pyproject` honors `[[tool.uv.index]]` / legacy `tool.uv.index-url`, falling back to PyPI. Private indexes work out of the box because we read uv's config.
+3. **Fetch** — `pypi.PyPIClient` (PEP 691 simple JSON, `Accept: application/vnd.pypi.simple.v1+json`) fetches all candidate versions concurrently (`ThreadPoolExecutor`, `MAX_WORKERS=8`).
+4. **Plan** — `parsers.plan_updates` decides which bumps are safe. Only `>=`, `>`, `~=` are upgraded (`UPGRADABLE_OPERATORS`); `==`, `===`, `<`, `<=`, `!=` are never touched. Compound specifiers like `>=1.2,<2.0` have their floor raised to the latest version that still satisfies the cap and exclusions. `--max-bump` and `--prerelease` filter candidates.
+5. **Apply + lock loop** — `_apply_with_lock` in `__main__.py` is the heart of the safety model:
+   - **Fast path**: write all updates, `uv lock`. If it locks, done.
+   - **`--strict`**: any lock failure restores `backup` (a deep copy of the original TOML) and exits non-zero.
+   - **Default (best-effort)**: try each update incrementally on top of the accepted set; failures are held back and `parsers.find_conflicts` parses `uv lock` stderr to attribute the conflict to peers.
+   - **`--resolve`**: when an upgrade fails at its latest version, `_search_compatible` binary-searches the eligible versions for the highest one that locks.
 
-The entry point (`main`) wraps the Click command so failures render as `error:` lines (never tracebacks). Repo root also ships `.pre-commit-hooks.yaml` and a composite `action.yml`.
+**Format preservation** is in `parsers.py`: specifiers are *parsed* with `packaging` (PEP 440/508) for correctness, but the rewrite is a surgical replacement of only the version token in the original string. Don't rebuild the requirement string from a `Requirement` object — that loses formatting.
 
-## Code Conventions
+**uv shell-out** is intentionally minimal: `uv.lock()` only ever runs `uv lock [--offline]` via `subprocess.run` and raises `UVCommandError` with captured stdout/stderr. Stderr is parsed by `parsers.find_conflicts` to attribute holdbacks — if you change `uv`'s error format expectations, update `find_conflicts` and its tests.
 
-- `from __future__ import annotations` required in every file (enforced by ruff isort)
-- Python 3.13 target for ruff; requires-python >= 3.10
-- All ruff lint rules enabled (`select = ["ALL"]`), specific ignores in pyproject.toml
-- Line length: 100
-- Double quotes, single-line imports, imports sorted by length
-- Type annotations throughout; type checker is `ty` (not mypy)
-- Coverage target: 95% (`__main__.py` and `__init__.py` are omitted from coverage)
-- Run the test suite with all dependency groups installed (e.g. `uv run --all-groups pytest`) so `pytest-cov` is available
+**Output**: `report.render` produces `text` / `json` / `markdown`. `text` is the human stream printed via `logging.Logger` (uv-style status lines: `Resolved`, `Updated`, `Audited`, `Locked`). Non-text formats suppress status lines (`quiet=quiet or output_format != "text"` in `cli`) so stdout stays machine-parseable — preserve that invariant if you add new logger calls in the hot path.
 
-## Commit Convention
+**Errors**: `main()` is the only place that catches exceptions and turns them into `SystemExit` with uv-style formatting. Inside `cli`, raise `click.exceptions.Exit(ERROR_EXIT_CODE)` (=2) for user-facing failures; `BaseError` subclasses bubble up to `main()`.
 
-Conventional Commits: `type(scope): description`
+## Project conventions
 
-Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `style`, `revert`. Semantic-release uses these for automatic versioning (`feat` = major, `fix`/`perf`/`refactor` = minor, `docs`/`style` = patch).
+- **Ruff `select = ["ALL"]`** with targeted ignores in `pyproject.toml`. `force-single-line = true` for imports, `lines-after-imports = 2`, `from __future__ import annotations` is **required** in every module (enforced by ruff `required-imports`).
+- **Tests** live in `tests/test_<module>.py` mirroring `src/uv_upsync/<module>.py`. `tests/*.py` ignores `INP001, PLR2004, S101, SLF001` so private access and magic numbers are fine in tests.
+- **Type checker is `ty`** (Astral's), not mypy.
+- **Versioning**: `__version__` in `src/uv_upsync/__init__.py` and `version` in `pyproject.toml` must stay in sync. `cliff.toml` drives the changelog.
+
+## Sibling-repo context
+
+This repo sits in `~/Development/sources/` — see the parent `CLAUDE.md` for the full monorepo map. `uv-upsync` belongs to the `libs` group; cross-cutting changes across libs are fanned out from the root `justfile` (`just <verb>-libs`). It is consumed by other repos in that workspace via `just update` recipes.
