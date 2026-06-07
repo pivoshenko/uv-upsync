@@ -14,13 +14,13 @@ All workflow lives in the `justfile`:
 
 - `just install` — `uv sync --all-groups --all-extras`
 - `just format` — `uvx pyupgrade --py310-plus` over `.` (excluding `.venv`), then `uvx ruff check --fix .`, then `uvx ruff format .`
-- `just lint` — `uvx ruff check .`, `uvx ruff format --check .`, and `uvx ty check .`
-- `just test` — `uvx pytest .` (config in `pyproject.toml`; runs with `--cov=src`)
+- `just lint` — `uvx ruff check .` and `uvx ty check .`
+- `just test` — `uv run pytest .` (config in `pyproject.toml`; runs with `--cov=src`; skipped silently if `.no-tests` sentinel exists)
 - `just audit` — `uvx pip-audit`
 - `just check` — `lint` + `test` (the CI gate)
 - `just update` — `uv lock --upgrade` then `uvx uv-upsync` (dogfoods itself)
 
-Single test: `uvx pytest tests/test_parsers.py::test_name -x`.
+Single test: `uv run pytest tests/test_parsers.py::test_name -x`.
 
 `requires-python = ">=3.10"` but `[tool.ty.environment] python-version = "3.13"` — type-check target is 3.13 even though runtime support starts at 3.10. Don't use 3.11+-only syntax in runtime code.
 
