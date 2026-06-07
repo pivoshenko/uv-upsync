@@ -13,12 +13,12 @@ The same code ships three ways: a PyPI package (`uvx uv-upsync`), a pre-commit h
 All workflow lives in the `justfile`:
 
 - `just install` — `uv sync --all-groups --all-extras`
-- `just format` — `uvx pyupgrade --py310-plus` over `src` and `tests`, then `uvx ruff check --fix .`, then `uvx ruff format .`
+- `just format` — `uvx pyupgrade --py310-plus` over `.` (excluding `.venv`), then `uvx ruff check --fix .`, then `uvx ruff format .`
 - `just lint` — `uvx ruff check .`, `uvx ruff format --check .`, and `uvx ty check .`
 - `just test` — `uvx pytest .` (config in `pyproject.toml`; runs with `--cov=src`)
 - `just audit` — `uvx pip-audit`
 - `just check` — `lint` + `test` (the CI gate)
-- `just update` — `uvx uv-upsync` then `uv sync` (dogfoods itself)
+- `just update` — `uv lock --upgrade` then `uvx uv-upsync` (dogfoods itself)
 
 Single test: `uvx pytest tests/test_parsers.py::test_name -x`.
 
