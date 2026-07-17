@@ -8,7 +8,7 @@ import click
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable
 
 
 class HelpFormatter(click.HelpFormatter):
@@ -22,7 +22,7 @@ class HelpFormatter(click.HelpFormatter):
 
     def write_dl(
         self,
-        rows: Sequence[tuple[str, str]],
+        rows: Iterable[tuple[str, str]],
         col_max: int = 30,
         col_spacing: int = 2,
     ) -> None:
