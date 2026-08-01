@@ -81,7 +81,7 @@ docstring-code-format = true
 quote-style = "double"
 
 [tool.ruff.lint]
-ignore = ["COM812", "D101", "D102", "D103", "D107", "D203", "D212", "G004", "PLE1205", "TRY003", "TRY400", "TRY401"]
+ignore = ["COM812", "CPY001", "D101", "D102", "D103", "D107", "D203", "D212", "G004", "PLE1205", "PLR0917", "TRY003", "TRY400", "TRY401"]
 select = ["ALL"]
 
 [tool.ruff.lint.isort]
