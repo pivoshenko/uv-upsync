@@ -51,10 +51,7 @@ The CLI is a single Click command in `src/uv_upsync/__main__.py:cli` that orches
 ## Project conventions
 
 - **Ruff `select = ["ALL"]`** with targeted ignores in `pyproject.toml`. `force-single-line = true` for imports, `lines-after-imports = 2`, `from __future__ import annotations` is **required** in every module (enforced by ruff `required-imports`).
+- **Module docstrings** open with `Module that contains ...`; `__init__.py` opens with `Package that contains ...`. Test modules read `Module that contains tests for ...`.
 - **Tests** live in `tests/test_<module>.py` mirroring `src/uv_upsync/<module>.py`. `tests/*.py` ignores `INP001, PLR2004, S101, SLF001` so private access and magic numbers are fine in tests.
 - **Type checker is `ty`** (Astral's), not mypy.
 - **Versioning**: `__version__` in `src/uv_upsync/__init__.py` and `version` in `pyproject.toml` must stay in sync. `cliff.toml` drives the changelog.
-
-## Sibling-repo context
-
-This repo sits in `~/Development/sources/` — see the parent `CLAUDE.md` for the full monorepo map. `uv-upsync` belongs to the `libs` group; cross-cutting changes across libs are fanned out from the root `justfile` (`just <verb>-libs`). It is consumed by other repos in that workspace via `just update` recipes.
