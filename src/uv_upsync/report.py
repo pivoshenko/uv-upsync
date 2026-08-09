@@ -1,5 +1,5 @@
 """
-Module that renders update results as JSON or Markdown.
+Module that contains the renderer for update results as JSON or Markdown.
 
 Text output is handled directly by the logger; this module produces the
 machine-readable formats used for scripting and for GitHub Action pull request
