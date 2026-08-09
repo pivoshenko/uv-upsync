@@ -70,7 +70,7 @@ docs/update-sync-flow-diagram
 refactor/mcps-schema-alignment
 ```
 
-A branch covering multiple unrelated changes should be split — one concern per branch makes review and bisect much easier.
+A branch covering multiple unrelated changes should be split. One concern per branch makes review and bisect much easier.
 
 ### Commits
 
@@ -86,10 +86,10 @@ This project follows [Conventional Commits](https://www.conventionalcommits.org/
 [optional body]
 ```
 
-- **type** — one of the prefixes from the table below
-- **scope** — the module, command, or area being changed (e.g. `sync`, `mcps`, `github`, `landing`, `config`); omit when the change is truly cross-cutting
-- **subject** — imperative mood, lowercase, no trailing period, 72 characters or fewer
-- **body** — optional; use it to explain *why*, not *what*; wrap at 72 characters
+- **type**: one of the prefixes from the table below
+- **scope**: the module, command, or area being changed (e.g. `sync`, `mcps`, `github`, `landing`, `config`); omit when the change is truly cross-cutting
+- **subject**: imperative mood, lowercase, no trailing period, 72 characters or fewer
+- **body**: optional; use it to explain *why*, not *what*; wrap at 72 characters
 
 **Type prefixes**
 

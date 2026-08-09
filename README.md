@@ -25,26 +25,26 @@
 
 `uv-upsync` is a [uv]-native tool for automated dependency updates and version bumping in `pyproject.toml`.
 
-`uv lock --upgrade` refreshes your **lockfile** but leaves the lower bounds in `pyproject.toml` untouched, so `httpx>=0.24.0` stays `>=0.24.0` forever. `uv-upsync` raises those human-authored bounds to the latest published version, re-locks with `uv`, and rolls back if the resolution fails — all while preserving your formatting, comments, operators, extras and environment markers.
+`uv lock --upgrade` refreshes your **lockfile** but leaves the lower bounds in `pyproject.toml` untouched, so `httpx>=0.24.0` stays `>=0.24.0` forever. `uv-upsync` raises those human-authored bounds to the latest published version, re-locks with `uv`, and rolls back if the resolution fails. Your formatting, comments, operators, extras and environment markers are preserved.
 
 [uv]: https://github.com/astral-sh/uv
 
 ### Features
 
-- **Built for the uv ecosystem** — familiar flags (`--project`, `--upgrade-package`, `--all-groups`, `--offline`, `--no-cache`, `--color`), uv-style output and a `uv lock` round-trip with automatic rollback on failure
-- **Index-aware** — resolves versions from the [PEP 691] index configured for your project via `[[tool.uv.index]]`, so private indexes work out of the box
-- **Correct by construction** — specifiers are parsed with [`packaging`], the canonical PEP 440/508 implementation, not regular expressions
-- **Conservative** — only raises lower bounds (`>=`, `>`, `~=`); pinned (`==`) requirements are never touched
-- **Range-aware** — compound specifiers like `>=1.2,<2.0` have their floor raised to the latest version that still satisfies the cap (`<2.0`) and any exclusions (`!=`)
-- **Controlled** — `--max-bump patch|minor|major` holds back larger jumps (auto-apply minors, review majors), and `--prerelease` opts into pre-release versions
-- **Format-preserving** — only the version token is rewritten; everything else, including comments and markers, is kept verbatim
-- **Fast** — version lookups are fetched concurrently and cached
-- **Selective** — target specific groups or packages, or exclude packages
-- **Configurable** — persist defaults in a `[tool.uv-upsync]` table, overridable per run
-- **Resilient** — by default an upgrade that does not resolve is held back individually instead of failing the whole run (`--strict` to opt out)
-- **Safe** — `--dry-run` to preview and `--check` for CI
-- **Scriptable** — `--format json` for tooling and `--format markdown` for pull request bodies
-- **Integrated** — ships a [pre-commit] hook and a GitHub Action
+- Familiar uv flags (`--project`, `--upgrade-package`, `--all-groups`, `--offline`, `--no-cache`, `--color`), uv-style output and a `uv lock` round-trip with automatic rollback on failure
+- Versions are resolved from the [PEP 691] index configured for your project via `[[tool.uv.index]]`, so private indexes work out of the box
+- Specifiers are parsed with [`packaging`], the canonical PEP 440/508 implementation, not regular expressions
+- Only lower bounds (`>=`, `>`, `~=`) are raised; pinned (`==`) requirements are never touched
+- Compound specifiers like `>=1.2,<2.0` have their floor raised to the latest version that still satisfies the cap (`<2.0`) and any exclusions (`!=`)
+- `--max-bump patch|minor|major` holds back larger jumps (auto-apply minors, review majors), and `--prerelease` opts into pre-release versions
+- Only the version token is rewritten; everything else, including comments and markers, is kept verbatim
+- Version lookups are fetched concurrently and cached
+- Target specific groups or packages, or exclude packages
+- Defaults live in a `[tool.uv-upsync]` table and can be overridden per run
+- By default an upgrade that does not resolve is held back individually instead of failing the whole run (`--strict` to opt out)
+- `--dry-run` previews the changes, `--check` gates CI
+- `--format json` for tooling, `--format markdown` for pull request bodies
+- Ships a [pre-commit] hook and a GitHub Action
 
 ## Installation
 
@@ -113,7 +113,7 @@ Audited 12 dependencies, all up to date
 
 ### Resolution
 
-After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined upgrade does not resolve, the default **best-effort** mode keeps the largest subset of upgrades that locks and reports which ones were held back (naming the conflicting dependency when it can) — so a single incompatible dependency never costs you the rest:
+After bumping the specifiers, `uv-upsync` re-locks with `uv`. If the combined upgrade does not resolve, the default **best-effort** mode keeps the largest subset of upgrades that locks and reports which ones were held back, naming the conflicting dependency when it can. A single incompatible dependency never costs you the rest:
 
 ```console
 $ uv-upsync
@@ -156,25 +156,25 @@ Settings are resolved with the precedence **command line > `[tool.uv-upsync]` > 
 
 ## Examples
 
-### Preview the upgrades
+### Preview the Upgrades
 
 ```shell
 uv-upsync --dry-run
 ```
 
-### Upgrade a single package
+### Upgrade a Single Package
 
 ```shell
 uv-upsync --upgrade-package httpx
 ```
 
-### Exclude packages
+### Exclude Packages
 
 ```shell
 uv-upsync --exclude click --exclude ruff
 ```
 
-### Upgrade specific groups
+### Upgrade Specific Groups
 
 ```shell
 # Only the project dependencies
@@ -184,7 +184,7 @@ uv-upsync --group project
 uv-upsync --group test --group docs
 ```
 
-### Fail CI when dependencies are stale
+### Fail CI When Dependencies Are Stale
 
 ```shell
 uv-upsync --check
@@ -206,8 +206,8 @@ repos:
 
 Two hooks are available:
 
-- **`uv-upsync`** — upgrade the bounds in `pyproject.toml` and re-lock (runs `uv lock`, so `uv` must be on your `PATH`)
-- **`uv-upsync-check`** — fail the commit if any dependency can be upgraded, without writing changes
+- `uv-upsync` upgrades the bounds in `pyproject.toml` and re-locks (runs `uv lock`, so `uv` must be on your `PATH`)
+- `uv-upsync-check` fails the commit if any dependency can be upgraded, without writing changes
 
 ## GitHub Action
 
@@ -237,7 +237,7 @@ jobs:
           branch: build/uv-upsync
 ```
 
-With `--format markdown` the action's `summary` output is a ready-made pull request body (`⬆️ click 8.1.8 → 8.2.1 …`). To gate pull requests instead, run the action with `args: --check` and drop the pull request step.
+With `--format markdown` the action's `summary` output is a ready-made pull request body (`⬆️ click 8.1.8 → 8.2.1 ...`). To gate pull requests instead, run the action with `args: --check` and drop the pull request step.
 
 | Input               | Description                                | Default |
 | ------------------- | ------------------------------------------ | ------- |
