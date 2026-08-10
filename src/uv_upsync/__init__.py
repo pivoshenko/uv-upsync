@@ -1,4 +1,4 @@
-"""Package that contains uv-upsync, a tool for automated dependency updates and version bumping in pyproject.toml."""
+"""Package that contains uv-upsync, a tool for automated dependency updates and version bumping."""
 
 from __future__ import annotations
 
