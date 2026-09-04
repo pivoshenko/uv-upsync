@@ -16,7 +16,6 @@ import contextlib
 from concurrent import futures
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Self
 
 import httpx
 
@@ -30,6 +29,7 @@ from uv_upsync import logging
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Self
 
 
 logger = logging.Logger()
