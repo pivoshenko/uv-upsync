@@ -207,7 +207,7 @@ def cli(  # noqa: C901, PLR0913, PLR0915
     use_color = COLOR_CHOICES[color]
     if use_color is None and os.environ.get("NO_COLOR"):
         use_color = False
-    # Machine-readable formats keep stdout clean by suppressing the status lines.
+    # Machine-readable formats keep stdout clean by suppressing the status lines
     logger.configure(quiet=quiet or output_format != "text", verbose=verbose, color=use_color)
 
     if directory is not None:
@@ -226,7 +226,7 @@ def cli(  # noqa: C901, PLR0913, PLR0915
         raise click.exceptions.Exit(ERROR_EXIT_CODE) from exception
     backup = copy.deepcopy(pyproject)
 
-    # Resolve settings with the precedence: CLI > [tool.uv-upsync] > defaults.
+    # Resolve settings with the precedence: CLI > [tool.uv-upsync] > defaults
     settings = upsync_config.load_config(pyproject)
     exclude = exclude or settings.exclude
     group = group or settings.group
@@ -442,7 +442,7 @@ def _apply_with_lock(  # noqa: PLR0913
             error.stderr, all_names, canonicalize_name(update.name)
         )
 
-    # The last trial may have written a failing candidate; restore the accepted set.
+    # The last trial may have written a failing candidate; restore the accepted set
     _write(pyproject, group, applied, filepath, all_groups=all_groups)
     return applied, held_back, conflicts
 
@@ -468,7 +468,7 @@ def _search_compatible(  # noqa: PLR0913
         max_bump=max_bump,
     )
 
-    # Candidates are ascending; the last is the latest version, which already failed.
+    # Candidates are ascending; the last is the latest version, which already failed
     low, high = 0, len(candidates) - 2
     best: parsers.Update | None = None
     while low <= high:

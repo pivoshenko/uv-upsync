@@ -40,7 +40,7 @@ logger = logging.Logger()
 
 # Operators whose lower bound it is safe to raise. Pinned (`==`, `===`), upper
 # bound (`<`, `<=`) and exclusion (`!=`) constraints are intentionally left
-# untouched, mirroring uv's conservative `--upgrade` behavior.
+# untouched, mirroring uv's conservative `--upgrade` behavior
 UPGRADABLE_OPERATORS = frozenset({">=", ">", "~="})
 PINNED_OPERATORS = frozenset({"==", "==="})
 BUMP_LEVELS = ("major", "minor", "patch")
