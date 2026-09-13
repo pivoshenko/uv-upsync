@@ -18,13 +18,12 @@ All workflow lives in the `justfile`:
 | `just format` | `uvx pyupgrade --py310-plus` over all `.py` outside `.venv`, then `uvx ruff check --fix .`, then `uvx ruff format .` |
 | `just lint` | `uvx ruff check .` and `uvx ty check .` (no `ruff format --check` — formatting is not gated) |
 | `just test` | `uv run pytest .`, skipped if a `.no-tests` sentinel file exists |
-| `just audit` | `uvx pip-audit` |
 | `just check` | `lint` + `test` |
 | `just update` | `uv lock --upgrade` then `uvx uv-upsync` (dogfoods itself) |
 
 Single test: `uv run pytest tests/test_parsers.py::test_name -x --no-cov`. `--no-cov` is worth adding because `addopts` in `pyproject.toml` forces `--cov=src --cov-report=term-missing`, which is noise for one test. 127 tests currently.
 
-CI (`.github/workflows/ci.yaml`) runs `just install`, `just lint`, `just audit`, `just test` on `ubuntu-24.04-arm` with Python 3.13. Note `audit` runs in CI but is not part of `just check`.
+CI (`.github/workflows/ci.yaml`) runs `just install`, `just lint`, `just test` on `ubuntu-24.04-arm` with Python 3.13.
 
 ## Architecture
 
