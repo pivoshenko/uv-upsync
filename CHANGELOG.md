@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2026-09-20
+
+### Bug fixes
+
+- Import Self from typing-extensions for python 3.10
+- Import Self under TYPE_CHECKING to restore Python 3.10 support
+- **commands**: Widen write_dl rows annotation to Iterable
+
+### Build
+
+- Bump python to 3.14
+- Update dependencies
+- Update dependencies
+- Update dependencies
+- **deps**: Update dependency lockfile
+- **deps**: Update dependencies
+- **deps**: Update dependencies
+
+### CI/CD
+
+- Pin workflow python to 3.14 and rename action.yml to yaml
+- Pin setup-uv to v10.1.0
+- Drop label sync in favor of terraform
+- Publish to pypi via trusted publishing instead of a token
+- Ignore rules newly stabilized in ruff 0.16
+- Drop ruff format --check from lint; suppress more ty rules
+- Use uv run pytest for project venv; format example file
+- Fix action versions and test recipe failures
+- Drop hashFiles guard; move .no-tests sentinel handling into justfile
+- Flatten to one job per language
+- Bump action versions to latest major
+- Standardize workflow to per-language parallel pipelines on ubuntu-24.04-arm
+
+### Documentation
+
+- Use absolute raw url for logo and refresh version notes
+- Rewrite CLAUDE.md from scratch
+- Regenerate CLAUDE.md and add AGENTS.md
+- **release**: Drop trusted publishing header comments
+- Add pull request template
+- Shorten module docstring to fit the line-length limit
+- Regenerate CLAUDE.md
+- Document the module docstring convention
+- Normalize module and package docstrings
+- Normalize punctuation and drop AI-flavored phrasing
+- Refresh CLAUDE.md for current justfile + CI shape
+- **ci**: Document required secrets at top of workflow files
+
+### Miscellaneous
+
+- **assets**: Drop svg repo attribution comments
+- Repository housekeeping
+- Symlink AGENTS.md to CLAUDE.md
+- Remove local pull request template
+- **deps**: Update locked dependencies
+- Update dependency lockfile
+- Add editorconfig
+- **justfile**: Use uv lock --upgrade for update, scope pyupgrade to . excluding .venv
+- Standardize justfile recipes and refresh CLAUDE.md
+
+### Refactor
+
+- **justfile**: Standardize recipe names and ordering
+
 ## [2.4.1] - 2026-05-31
 
 ### Build
@@ -23,6 +87,10 @@ All notable changes to this project will be documented in this file.
 ### Refactor
 
 - Tidy logging and parser internals
+
+### Release
+
+- V2.4.1
 
 ## [2.4.0] - 2026-05-30
 
