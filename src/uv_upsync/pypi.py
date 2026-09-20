@@ -29,7 +29,8 @@ from uv_upsync import logging
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Self
+
+    from typing_extensions import Self
 
 
 logger = logging.Logger()

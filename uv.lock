@@ -488,6 +488,7 @@ dependencies = [
     { name = "httpx" },
     { name = "packaging" },
     { name = "tomlkit" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -513,6 +514,7 @@ requires-dist = [
     { name = "httpx", specifier = "~=0.28.1" },
     { name = "packaging", specifier = "~=26.3" },
     { name = "tomlkit", specifier = "~=0.15.1" },
+    { name = "typing-extensions", specifier = "~=4.16.0" },
 ]
 
 [package.metadata.requires-dev]
