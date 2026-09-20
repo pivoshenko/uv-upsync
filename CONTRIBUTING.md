@@ -59,7 +59,7 @@ Concrete examples, API sketches, UI mockups, or references are helpful when rele
 
 ### Local Development
 
-This repo needs [uv](https://docs.astral.sh/uv), which manages Python 3.13 for you, and `just`.
+This repo needs [uv](https://docs.astral.sh/uv), which manages Python 3.14 for you, and `just`.
 
 This project uses [`just`](https://github.com/casey/just) as its task runner. Run `just --list` for the full set; these are the ones you need day to day:
 
@@ -85,7 +85,7 @@ Workflows live in `.github/workflows`:
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| CI | Push to `main`, pull requests, `workflow_dispatch` | Single `ci` job on `ubuntu-24.04-arm`; installs `just` and uv pinned to Python 3.13, installs the project dependencies, then lints, type-checks and tests the project |
+| CI | Push to `main`, pull requests, `workflow_dispatch` | Single `ci` job on `ubuntu-24.04-arm`; installs `just` and uv pinned to Python 3.14, installs the project dependencies, then lints, type-checks and tests the project |
 | Release | `workflow_dispatch` (optional `version` input) | Three chained jobs on `ubuntu-24.04-arm`: `tag` takes the version from the `version` input or derives the next one from the commit history with git-cliff, bumps the project version, regenerates `CHANGELOG.md` and pushes the release commit and its tag to `main`; `release` (needs `tag`) publishes the GitHub Release with the generated notes; `publish` (needs `tag` and `release`) builds the package and uploads it to PyPI via trusted publishing |
 
 CI must be green before a pull request is merged.

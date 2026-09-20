@@ -14,7 +14,7 @@ Any change to the CLI flags has to land in four places, not one:
 
 1. `src/uv_upsync/__main__.py` - the click options
 2. `README.md` - the options table and the `[tool.uv-upsync]` example block
-3. `action.yml` - the composite GitHub Action (passes `inputs.args` through to `uvx uv-upsync`, captures stdout into a `summary` output for PR bodies)
+3. `action.yaml` - the composite GitHub Action (passes `inputs.args` through to `uvx uv-upsync`, captures stdout into a `summary` output for PR bodies)
 4. `.pre-commit-hooks.yaml` - the `uv-upsync` and `uv-upsync-check` hooks, both `pass_filenames: false` and gated on `^pyproject\.toml$`
 
 A new config key also needs a branch in `config.load_config` plus its validator, and the corresponding `flag = flag or settings.flag` line in `cli`.
