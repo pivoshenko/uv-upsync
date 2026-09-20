@@ -7,6 +7,10 @@ import typing
 import click
 
 
+if typing.TYPE_CHECKING:
+    from typing_extensions import Self
+
+
 class Logger:
     """Singleton logger that mimics uv's terse, status-oriented output style."""
 
@@ -16,14 +20,14 @@ class Logger:
     verbose: bool
     color: bool | None
 
-    def __new__(cls) -> typing.Self:
+    def __new__(cls) -> Self:
         if cls._instance is None:
             instance = super().__new__(cls)
             instance.quiet = False
             instance.verbose = False
             instance.color = None
             cls._instance = instance
-        return typing.cast("typing.Self", cls._instance)
+        return typing.cast("Self", cls._instance)
 
     def configure(
         self,
