@@ -389,8 +389,7 @@ def _apply_with_lock(  # noqa: PLR0913
     allow_prerelease: bool,
     max_bump: str | None,
 ) -> tuple[list[parsers.Update], list[parsers.Update], dict[str, list[str]]]:
-    """
-    Apply the upgrades and lock, returning the applied, held-back and conflict info.
+    """Apply the upgrades and lock, returning the applied, held-back and conflict info.
 
     The full set is tried first (the common, fast path). On failure, `--strict`
     rolls everything back, while the default best-effort mode keeps the maximal

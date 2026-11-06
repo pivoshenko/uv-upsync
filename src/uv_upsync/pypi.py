@@ -1,5 +1,4 @@
-"""
-Module that contains a PyPI client that speaks the PEP 691 simple JSON API.
+"""Module that contains a PyPI client that speaks the PEP 691 simple JSON API.
 
 The client returns the full list of published versions for a set of packages
 from any PEP 691 compatible index. By default it talks to PyPI, but it honors

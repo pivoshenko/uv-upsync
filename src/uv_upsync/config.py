@@ -1,5 +1,4 @@
-"""
-Module that contains the reader for project-level configuration from `[tool.uv-upsync]`.
+"""Module that contains the reader for project-level configuration from `[tool.uv-upsync]`.
 
 Settings declared in `pyproject.toml` provide defaults so they do not have to be
 repeated on every invocation. Command-line arguments always take precedence over
