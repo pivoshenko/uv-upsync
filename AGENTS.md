@@ -53,7 +53,7 @@ The module boundaries that carry a rule (the rest is `ls src/uv_upsync/`):
 
 `just --list` and `CONTRIBUTING.md` carry the recipe table; CI runs the same recipes, so a green `just check` locally means a green CI. One thing the table does not say:
 
-- `just update` runs `uvx uv-upsync` against this repo - the tool eats its own dogfood here
+- `just update` runs `uv run uv-upsync` against this repo, so it uses the working tree's own version of the tool
 
 Run the CLI itself with `uv run uv-upsync ...` (entry point `uv_upsync.__main__:main`).
 
