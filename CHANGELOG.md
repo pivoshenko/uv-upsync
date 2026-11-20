@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.3] - 2026-11-20
+
+### Build
+
+- **justfile**: Split recipes into package parts
+- **deps**: Upgrade python dependencies
+- **justfile**: Add an audit recipe for known dependency vulnerabilities
+- Standardize the pyproject configuration
+- Standardize just recipes
+- Drop pyupgrade in favor of ruff
+- **deps**: Update dependencies
+
+### CI/CD
+
+- Fold audit into ci and standardize the release
+
+### Documentation
+
+- Say just update runs the working tree's uv-upsync
+- Describe the standardized recipes
+- Describe format without pyupgrade
+- Move agent instructions from CLAUDE.md to AGENTS.md
+
+### Miscellaneous
+
+- Put docstring summaries on the first line
+
 ## [2.4.2] - 2026-09-20
 
 ### Bug fixes
@@ -65,6 +92,10 @@ All notable changes to this project will be documented in this file.
 ### Refactor
 
 - **justfile**: Standardize recipe names and ordering
+
+### Release
+
+- V2.4.2
 
 ## [2.4.1] - 2026-05-31
 

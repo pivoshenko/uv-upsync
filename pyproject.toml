@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "uv-upsync"
-version = "2.4.2"
+version = "2.4.3"
 description = "uv-upsync - is a tool for automated dependency updates and version bumping in pyproject.toml."
 readme = "README.md"
 keywords = [
